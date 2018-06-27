@@ -168,3 +168,42 @@ void forward_partition(cnn_model* model, uint32_t task_id){
    if (to_free == 1) free(net.input);
 }
 
+void draw_object_boxes(cnn_model* model, uint32_t id){
+   network net = *(model->net);
+   image sized;
+   sized.w = net.w; sized.h = net.h; sized.c = net.c;
+   load_image_by_number(&sized, id);
+   image **alphabet = load_alphabet();
+   list *options = read_data_cfg((char*)"data/coco.data");
+   char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
+   char **names = get_labels(name_list);
+   char filename[256];
+   char outfile[256];
+   float thresh = .24;
+   float hier_thresh = .5;
+   float nms=.3;
+   sprintf(filename, "data/%d.jpg", id);
+   sprintf(outfile, "%d.jpg", id);
+   layer l = net.layers[net.n-1];
+   float **masks = 0;
+   if (l.coords > 4){
+      masks = (float **)calloc(l.w*l.h*l.n, sizeof(float*));
+      for(int j = 0; j < l.w*l.h*l.n; ++j) masks[j] = (float *)calloc(l.coords-4, sizeof(float *));
+   }
+   float **probs = (float **)calloc(l.w*l.h*l.n, sizeof(float *));
+   for(int j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *)calloc(l.classes + 1, sizeof(float *));
+   image im = load_image_color(filename,0,0);
+   box *boxes = (box *)calloc(l.w*l.h*l.n, sizeof(box));
+   get_region_boxes(l, im.w, im.h, net.w, net.h, thresh, probs, boxes, masks, 0, 0, hier_thresh, 1);
+   if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+   draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, masks, names, alphabet, l.classes);
+   save_image(im, outfile);
+   free(boxes);
+   free_ptrs((void **)probs, l.w*l.h*l.n);
+   if (l.coords > 4){
+      free_ptrs((void **)masks, l.w*l.h*l.n);
+   }
+   free_image(im);
+}
+
+
