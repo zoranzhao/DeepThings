@@ -94,12 +94,27 @@ void load_image_by_number(image* img, uint32_t id){
    int32_t h = img->h;
    int32_t w = img->w;
    char filename[256];
-   sprintf(filename, "data/%d.jpg", id);
+   sprintf(filename, "data/input/%d.jpg", id);
    image im = load_image_color(filename, 0, 0);
    image sized = letterbox_image(im, w, h);
    free_image(im);
    img->data = sized.data;
 }
+
+image load_image_as_model_input(cnn_model* model, uint32_t id){
+   image sized;
+   sized.w = model->net->w; 
+   sized.h = model->net->h; 
+   sized.c = model->net->c;
+   load_image_by_number(&sized, id);
+   model->net->input = sized.data;
+   return sized;
+}
+
+void free_image_holder(cnn_model* model, image sized){
+   free_image(sized);   
+}
+
 
 void forward_all(cnn_model* model, uint32_t from){
    network net = *(model->net);
@@ -182,8 +197,8 @@ void draw_object_boxes(cnn_model* model, uint32_t id){
    float thresh = .24;
    float hier_thresh = .5;
    float nms=.3;
-   sprintf(filename, "data/%d.jpg", id);
-   sprintf(outfile, "%d.jpg", id);
+   sprintf(filename, "data/input/%d.jpg", id);
+   sprintf(outfile, "%d", id);
    layer l = net.layers[net.n-1];
    float **masks = 0;
    if (l.coords > 4){
