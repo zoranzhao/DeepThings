@@ -1,4 +1,6 @@
 OPENMP=1
+DEBUG=1
+
 VPATH=./src
 DARKIOT=../DarkIoT
 DARKNET=../nnpack_darknet/darknet-nnpack
@@ -56,4 +58,4 @@ test:
 .PHONY: clean
 
 clean:
-	rm -rf $(EXEC) $(EXECOBJ) *.log $(OBJDIR) 
+	rm -rf $(EXEC) $(EXECOBJ) *.log $(OBJDIR) *.png 
