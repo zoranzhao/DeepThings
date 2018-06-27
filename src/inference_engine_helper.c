@@ -89,7 +89,15 @@ void set_model_input(cnn_model* model, float* input){
    model->net->input = input;
 }
 
-//Load images by name
+float* get_model_output(cnn_model* model, uint32_t layer){
+   return model->net->layers[layer].output;
+}
+
+uint32_t get_model_byte_size(cnn_model* model, uint32_t layer){
+   return model->net->layers[layer].outputs* sizeof(float);
+}
+
+
 void load_image_by_number(image* img, uint32_t id){
    int32_t h = img->h;
    int32_t w = img->w;
