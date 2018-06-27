@@ -57,4 +57,7 @@ void free_image_holder(cnn_model* model, image_holder sized);
 void forward_all(cnn_model* model, uint32_t from);
 void draw_object_boxes(cnn_model* model, uint32_t id);
 
+float* crop_feature_maps(float* input, uint32_t w, uint32_t h, uint32_t c, uint32_t dw1, uint32_t dw2, uint32_t dh1, uint32_t dh2);
+void stitch_feature_maps(float* input, float* output, uint32_t w, uint32_t h, uint32_t c, uint32_t dw1, uint32_t dw2, uint32_t dh1, uint32_t dh2);
+
 #endif

@@ -25,7 +25,7 @@ static inline void grid(network_parameters* net_para, ftp_parameters* ftp_para, 
          ftp_para->output_tiles[task_id][ftp_para->fused_layers-1].h2 = end_h;
          ftp_para->output_tiles[task_id][ftp_para->fused_layers-1].h = end_h - start_h + 1;
          ftp_para->output_tiles[task_id][ftp_para->fused_layers-1].w = end_w - start_w + 1;
-         print_tile_region(ftp_para->output_tiles[task_id][ftp_para->fused_layers-1]);
+         /*print_tile_region(ftp_para->output_tiles[task_id][ftp_para->fused_layers-1]);*/
          start_w = end_w + 1;
          if(j == (partition_w-2)) {end_w = w - 1;}
          else {end_w = end_w + stride_w;}
