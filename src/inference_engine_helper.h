@@ -64,6 +64,6 @@ float* get_model_input(cnn_model* model);
 void set_model_input(cnn_model* model, float* input);
 float* get_model_output(cnn_model* model, uint32_t layer);
 uint32_t get_model_byte_size(cnn_model* model, uint32_t layer);
-tile_region crop_ranges(tile_region large, tile_region small);
+tile_region relative_offsets(tile_region large, tile_region small);
 
 #endif

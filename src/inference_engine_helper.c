@@ -140,7 +140,7 @@ void forward_all(cnn_model* model, uint32_t from){
    }
 }
 
-tile_region crop_ranges(tile_region large, tile_region small){
+tile_region relative_offsets(tile_region large, tile_region small){
     tile_region output; 
     output.w1 = small.w1 - large.w1 ; 
     output.w2 = small.w1 - large.w1 + (small.w2 - small.w1);
@@ -179,7 +179,7 @@ void forward_partition(cnn_model* model, uint32_t task_id){
         So for the calculation of next layer, the boundary pixels should be removed.
       */
       if(net.layers[l].type == CONVOLUTIONAL){
-         tile_region tmp = crop_ranges(ftp_para->input_tiles[task_id][l], 
+         tile_region tmp = relative_offsets(ftp_para->input_tiles[task_id][l], 
                                        ftp_para->output_tiles[task_id][l]);   
          cropped_output = crop_feature_maps(net.layers[l].output, 
                       net.layers[l].out_w, net.layers[l].out_h, net.layers[l].out_c,
