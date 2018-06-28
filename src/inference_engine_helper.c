@@ -140,7 +140,7 @@ void forward_all(cnn_model* model, uint32_t from){
    }
 }
 
-static tile_region crop_ranges(tile_region large, tile_region small){
+tile_region crop_ranges(tile_region large, tile_region small){
     tile_region output; 
     output.w1 = small.w1 - large.w1 ; 
     output.w2 = small.w1 - large.w1 + (small.w2 - small.w1);
@@ -173,7 +173,8 @@ void forward_partition(cnn_model* model, uint32_t task_id){
          to_free = 0; 
          /*Free the memory allocated by the crop_feature_maps function call;*/
       }
-      /*The effective region is actually shrinking after each convolutional layer 
+      /*
+        The effective region is actually shrinking after each convolutional layer 
         because of padding effects.
         So for the calculation of next layer, the boundary pixels should be removed.
       */
