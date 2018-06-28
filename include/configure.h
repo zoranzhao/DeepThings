@@ -7,6 +7,8 @@
 #define PARTITIONS_H_MAX 6
 #define PARTITIONS_MAX 36
 #define THREAD_NUM 1
+#define DATA_REUSE 1
+
 #include <stdint.h>
 
 extern uint32_t fused_layers;

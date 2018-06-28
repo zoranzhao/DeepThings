@@ -88,6 +88,30 @@ ftp_parameters* preform_ftp(uint32_t N, uint32_t M, uint32_t fused_layers, netwo
    return ftp_para;
 }
 
+#if DATA_REUSE
+/*Establish a dependency list, 0 means no dependencies, 1 depends on 0, 2 depends on 1 ...*/
+/*For current implementation*/
+
+/*This function must be called after perform_ftp()*/
+ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parameters* ftp_para){
+   ftp_parameters_reuse* ftp_para_reuse = (ftp_parameters_reuse*)malloc(sizeof(ftp_parameters_reuse));
+   ftp_para_reuse->partitions = ftp_para->partitions;
+   ftp_para_reuse->partitions_h = ftp_para->partitions_h;
+   ftp_para_reuse->partitions_w = ftp_para->partitions_w;
+   ftp_para_reuse->fused_layers = ftp_para->fused_layers;
+   int32_t i, j, l;
+   for(i = 0; i < ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < ftp_para_reuse->partitions_w; j++){
+         ftp_para_reuse->task_id[i][j] = ftp_para->task_id[i][j];
+      }
+   }
+
+
+   
+   return ftp_para_reuse;
+}
+
+#endif /*DATA_REUSE*/
 void print_tile_region(tile_region tile){
    printf("tile size is (%3d,%3d) \n", tile.w, tile.h);
    printf("(%3d,%3d)--------|\n", tile.w1, tile.h1);
