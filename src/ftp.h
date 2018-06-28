@@ -37,10 +37,10 @@ typedef struct def_overlapped_data{
    float *right;
    float *up;
    float *left;
-   tile_region down_range;
-   tile_region right_range;
-   tile_region left_range;
-   tile_region up_range;
+   tile_region down_region;
+   tile_region right_region;
+   tile_region left_region;
+   tile_region up_region;
 } overlapped_tile_data;
 
 typedef struct def_ftp_parameters_reuse{
@@ -50,11 +50,10 @@ typedef struct def_ftp_parameters_reuse{
    uint32_t fused_layers;
    uint32_t task_id[PARTITIONS_H_MAX][PARTITIONS_W_MAX];
    uint32_t schedule[PARTITIONS_H_MAX][PARTITIONS_W_MAX];
-   tile_region shrinked_input_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
-   tile_region shrinked_output_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
+   tile_region input_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
+   tile_region output_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
    overlapped_tile_data output_reuse_regions[PARTITIONS_MAX][FUSED_LAYERS_MAX];
 } ftp_parameters_reuse;
-
 #endif
 
 ftp_parameters* preform_ftp(uint32_t N, uint32_t M, uint32_t fused_layers, network_parameters* net_para);
