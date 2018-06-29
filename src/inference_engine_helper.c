@@ -151,6 +151,11 @@ tile_region relative_offsets(tile_region large, tile_region small){
     return output;
 }
 
+void record_overlapped_output_for_current_layer(ftp_parameters_reuse* ftp_para_reuse, uint32_t l, float* layer_output){
+
+
+}
+
 void forward_partition(cnn_model* model, uint32_t task_id){
    network net = *(model->net);
    ftp_parameters* ftp_para = model->ftp_para;
@@ -166,6 +171,21 @@ void forward_partition(cnn_model* model, uint32_t task_id){
    }
    uint32_t to_free = 0;
    float * cropped_output;
+#if DATA_REUSE
+   if((model->ftp_para_reuse->schedule[task_id] == 1)&&is_reuse_ready(model->ftp_para_reuse, task_id)){
+      for(l = 0; l < ftp_para_reuse->fused_layers; l++){
+         net.layers[l].h = ftp_para_reuse->input_tiles[task_id][l].h;
+         net.layers[l].out_h = (net.layers[l].h/net.layers[l].stride); 
+         net.layers[l].w = ftp_para_reuse->input_tiles[task_id][l].w;
+         net.layers[l].out_w = (net.layers[l].w/net.layers[l].stride);
+         net.layers[l].outputs = net.layers[l].out_h * net.layers[l].out_w * net.layers[l].out_c; 
+         net.layers[l].inputs = net.layers[l].h * net.layers[l].w * net.layers[l].c; 
+      }
+   }
+   uint32_t to_free_next_layer_input = 0;
+   float* stitched_next_layer_input;
+#endif
+
    for(l = 0; l < ftp_para->fused_layers; l++){
       net.layers[l].forward(net.layers[l], net);
       if (to_free == 1) {
@@ -186,10 +206,21 @@ void forward_partition(cnn_model* model, uint32_t task_id){
                       tmp.w1, tmp.w2, tmp.h1, tmp.h2);
          to_free = 1;
       } else {cropped_output = net.layers[l].output;}  
-
       net.input = cropped_output;
+#if DATA_REUSE
+      /*record_overlapped_output_for_current_layer(model->ftp_para_reuse, cropped_output)*/
+      
+      net.input = stitched_next_layer_input;
+#endif
    }
-   if (to_free == 1) free(net.input);
+   if (to_free == 1) free(cropped_output);
+
+
+
+#if DATA_REUSE
+   if (to_free_next_layer_input == 1) free(stitched_next_layer_input);
+   set_coverage(model->ftp_para_reuse, task_id);
+#endif
 }
 
 void draw_object_boxes(cnn_model* model, uint32_t id){
