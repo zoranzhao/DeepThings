@@ -319,6 +319,52 @@ bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    return ready;
 }
 
+
+tile_region get_region(overlapped_tile_data * overlap, uint32_t pos){
+   if(pos == 0) return overlap->down_region;
+   if(pos == 1) return overlap->right_region;
+   if(pos == 2) return overlap->up_region;
+   if(pos == 3) return overlap->left_region;
+   tile_region empty;
+   return empty;
+}
+
+uint32_t get_size(overlapped_tile_data * overlap, uint32_t pos){
+   if(pos == 0) return overlap->down_size;
+   if(pos == 1) return overlap->right_size;
+   if(pos == 2) return overlap->up_size;
+   if(pos == 3) return overlap->left_size;
+   return 0;
+}
+
+float* get_data(overlapped_tile_data * overlap, uint32_t pos){
+   if(pos == 0) return overlap->down;
+   if(pos == 1) return overlap->right;
+   if(pos == 2) return overlap->up;
+   if(pos == 3) return overlap->left;
+   return NULL;
+}
+
+void set_region(overlapped_tile_data * overlap, uint32_t pos, tile_region tile){
+   if(pos == 0) overlap->down_region = tile;
+   if(pos == 1) overlap->right_region = tile;
+   if(pos == 2) overlap->up_region = tile;
+   if(pos == 3) overlap->left_region = tile;
+}
+
+void set_size(overlapped_tile_data * overlap, uint32_t pos, uint32_t size){
+   if(pos == 0) overlap->down_size = size;
+   if(pos == 1) overlap->right_size = size;
+   if(pos == 2) overlap->up_size = size;
+   if(pos == 3) overlap->left_size = size;
+}
+
+void set_data(overlapped_tile_data * overlap, uint32_t pos, float* data){
+   if(pos == 0) overlap->down = data;
+   if(pos == 1) overlap->right = data;
+   if(pos == 2) overlap->up = data;
+   if(pos == 3) overlap->left = data;
+}
 #endif /*DATA_REUSE*/
 void print_tile_region(tile_region tile){
    printf("tile size is (%3d,%3d) \n", tile.w, tile.h);

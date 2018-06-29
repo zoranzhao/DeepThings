@@ -44,8 +44,8 @@ typedef struct def_overlapped_data{
    uint32_t left_size;
    tile_region down_region;
    tile_region right_region;
-   tile_region left_region;
    tile_region up_region;
+   tile_region left_region;
 } overlapped_tile_data;
 
 typedef struct def_ftp_parameters_reuse{
@@ -68,6 +68,12 @@ void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
 void clean_coverage(ftp_parameters_reuse* ftp_para_reuse);
 bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
 
+tile_region get_region(overlapped_tile_data * overlap, uint32_t pos);
+uint32_t get_size(overlapped_tile_data * overlap, uint32_t pos);
+float* get_data(overlapped_tile_data * overlap, uint32_t pos);
+void set_region(overlapped_tile_data * overlap, uint32_t pos, tile_region tile);
+void set_size(overlapped_tile_data * overlap, uint32_t pos, uint32_t size);
+void set_data(overlapped_tile_data * overlap, uint32_t pos, float* data);
 
 #endif
 
