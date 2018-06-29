@@ -32,6 +32,32 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
 
    }
 #if DATA_REUSE
+   for(i = 0; i < model->ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
+         task = model->ftp_para_reuse->task_id[i][j];
+         if(model->ftp_para_reuse->schedule[task] == 1){
+            remove_by_id(task_queue, task);
+            /*Enqueue original size for rollback execution if adjacent partition is not ready... ...*/
+            dw1 = model->ftp_para->input_tiles[task][0].w1;
+            dw2 = model->ftp_para->input_tiles[task][0].w2;
+            dh1 = model->ftp_para->input_tiles[task][0].h1;
+            dh2 = model->ftp_para->input_tiles[task][0].h2;
+            data = crop_feature_maps(get_model_input(model), 
+                                  net_para->input_maps[0].w, 
+                                  net_para->input_maps[0].h,
+                                  net_para->input_maps[0].c, 
+                                  dw1, dw2, dh1, dh2);
+            data_size = sizeof(float)*(dw2-dw1+1)*(dh2-dh1+1)*net_para->input_maps[0].c;
+            temp = new_blob_and_copy_data((int32_t)task, data_size, (uint8_t*)data);
+            free(data);
+            annotate_blob(temp, get_this_client_id(), frame_num, task);
+            enqueue(task_queue, temp);
+            free_blob(temp);
+        }
+      }
+   }
+
+
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    clean_coverage(ftp_para_reuse);
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
