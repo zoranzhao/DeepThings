@@ -53,6 +53,7 @@ typedef struct cnn_model_wrapper{
 #define POOLING_LAYER MAXPOOL /*MAXPOOL is from Darknet*/
 #define image_holder image
 
+
 cnn_model* load_cnn_model(char* cfg, char* weights);
 void forward_partition(cnn_model* model, uint32_t task_id);
 image_holder load_image_as_model_input(cnn_model* model, uint32_t id);

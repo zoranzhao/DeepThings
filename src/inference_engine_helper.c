@@ -186,6 +186,10 @@ float* stitch_reuse_output(cnn_model* model, uint32_t task_id,  uint32_t l, floa
    tile_region offset_index;
    /*stich the central region*/
    offset_index = relative_offsets(ftp_para_reuse->input_tiles[task_id][l+1], ftp_para_reuse->output_tiles[task_id][l]);
+#if DEBUG_INFERENCE
+   printf("Main indexed\n");
+   print_tile_region(offset_index);
+#endif
    stitch_feature_maps(layer_output, stitched_data,
 			ftp_para_reuse->input_tiles[task_id][l+1].w, 
                         ftp_para_reuse->input_tiles[task_id][l+1].h, 
@@ -221,6 +225,12 @@ float* stitch_reuse_output(cnn_model* model, uint32_t task_id,  uint32_t l, floa
       overlap_index = get_region(&regions_and_data, mirror_position);
       if((overlap_index.w>0)&&(overlap_index.h>0)){
          offset_index = relative_offsets(ftp_para_reuse->input_tiles[task_id][l+1], overlap_index);
+#if DEBUG_INFERENCE
+         printf("side indexed\n");
+         print_tile_region(offset_index);
+         print_tile_region(ftp_para_reuse->input_tiles[task_id][l+1]);
+         printf("side indexed, data size is %d\n", get_size(&regions_and_data, mirror_position));
+#endif
          stitch_feature_maps(get_data(&regions_and_data, mirror_position), 
                         stitched_data,
 			ftp_para_reuse->input_tiles[task_id][l+1].w, 
@@ -278,9 +288,14 @@ void forward_partition(cnn_model* model, uint32_t task_id){
         because of padding effects.
         So for the calculation of next layer, the boundary pixels should be removed.
       */
+      tile_region tmp;
       if(net.layers[l].type == CONVOLUTIONAL){
-         tile_region tmp = relative_offsets(ftp_para->input_tiles[task_id][l], 
-                                       ftp_para->output_tiles[task_id][l]);   
+         tmp = relative_offsets(ftp_para->input_tiles[task_id][l], 
+                                       ftp_para->output_tiles[task_id][l]);
+#if DATA_REUSE
+         tmp = relative_offsets(ftp_para_reuse->input_tiles[task_id][l], 
+                                       ftp_para_reuse->output_tiles[task_id][l]);
+#endif
          cropped_output = crop_feature_maps(net.layers[l].output, 
                       net.layers[l].out_w, net.layers[l].out_h, net.layers[l].out_c,
                       tmp.w1, tmp.w2, tmp.h1, tmp.h2);
@@ -288,14 +303,18 @@ void forward_partition(cnn_model* model, uint32_t task_id){
       } else {cropped_output = net.layers[l].output;}  
       net.input = cropped_output;
 #if DATA_REUSE
-      if (to_free_next_layer_input == 1) free(stitched_next_layer_input);
       record_overlapped_output(model, task_id, l, cropped_output);
-      if(l < (ftp_para->fused_layers - 1)){
-         stitched_next_layer_input = stitch_reuse_output(model, task_id, l, cropped_output);
-         to_free_next_layer_input = 1;
+      if(model->ftp_para_reuse->schedule[task_id] == 1){
+         if (to_free_next_layer_input == 1) {
+            free(stitched_next_layer_input);
+            to_free_next_layer_input = 0;
+         }
+         if(l < (ftp_para_reuse->fused_layers - 1)){
+            stitched_next_layer_input = stitch_reuse_output(model, task_id, l, cropped_output);
+            to_free_next_layer_input = 1;
+         }
+         net.input = stitched_next_layer_input;
       }
-      net.input = stitched_next_layer_input;
-
 #endif
    }
    if (to_free == 1) free(cropped_output);
