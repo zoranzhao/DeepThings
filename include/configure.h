@@ -9,6 +9,9 @@
 #define THREAD_NUM 1
 #define DATA_REUSE 1
 
+#define DEBUG_INFERENCE 0
+#define DEBUG_FTP 0
+
 #include <stdint.h>
 
 
