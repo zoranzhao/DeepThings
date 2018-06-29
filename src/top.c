@@ -287,7 +287,7 @@ int main(int argc, char **argv){
    model->ftp_para = preform_ftp(2, 2, 4, model->net_para);
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 
-
+/*
    for(int i = 0; i < 2; i++){
       for(int j = 0; j < 2; j++){
          printf("------------------(%3d,%3d)----------------\n", i, j);
@@ -296,8 +296,8 @@ int main(int argc, char **argv){
          print_tile_region(model->ftp_para_reuse->input_tiles[model->ftp_para->task_id[i][j]][0]);
       }
    }
-
-
+*/
+/*
    for(int frame_seq = 0; frame_seq < 1; frame_seq++){
       image_holder img = load_image_as_model_input(model, frame_seq);
       partition_and_enqueue(model, frame_seq);
@@ -317,7 +317,7 @@ int main(int argc, char **argv){
                                      );
          copy_blob_meta(result, temp);
          enqueue(results_pool[this_cli_id], result);
-         /*enqueue(result_queue, result);*/ 
+         //enqueue(result_queue, result); 
          free_blob(result);
          free_blob(temp);
       }
@@ -331,6 +331,7 @@ int main(int argc, char **argv){
       draw_object_boxes(model, frame_seq);
       free_image_holder(model, img);
    }
+*/
 /*
    for(int frame_seq = 0; frame_seq < 4; frame_seq++){
       image_holder img = load_image_as_model_input(model, frame_seq);

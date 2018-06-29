@@ -11,9 +11,6 @@
 
 #include <stdint.h>
 
-extern uint32_t fused_layers;
-extern uint32_t partitions;
-extern uint32_t partitions_w;
-extern uint32_t partitions_h;
+
 
 #endif

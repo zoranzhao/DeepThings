@@ -218,7 +218,7 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];
-         for(l = fused_layers-1; l >= 0; l--){
+         for(l = ftp_para_reuse->fused_layers-1; l >= 0; l--){
             if(ftp_para_reuse->schedule[task] == 0){
                /*If there is no dependency, just copy from normal ftp parameters*/
                ftp_para_reuse->input_tiles[task][l] = ftp_para->input_tiles[task][l];
@@ -232,7 +232,7 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];
-         for(l = fused_layers-1; l >= 0; l--){
+         for(l = ftp_para_reuse->fused_layers-1; l >= 0; l--){
             ftp_para_reuse->output_reuse_regions[task][l].down_size = 0;
             ftp_para_reuse->output_reuse_regions[task][l].right_size = 0;
             ftp_para_reuse->output_reuse_regions[task][l].up_size = 0;
@@ -250,7 +250,8 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
    }
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
-         for(l = fused_layers-1; l >= 0; l--){
+         printf("------------------(%3d,%3d)----------------\n", i, j);
+         for(l = ftp_para_reuse->fused_layers-1; l >= 0; l--){
             task = ftp_para_reuse->task_id[i][j];
             if(ftp_para_reuse->schedule[task] == 1){
                ftp_para->input_tiles[ftp_para->task_id[i][j]][l] = 
@@ -259,6 +260,7 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
                          = remove_and_record_overlapped_region_at_output(i, j, l-1,  ftp_para_reuse, 
                                                       ftp_para_reuse->input_tiles[ftp_para->task_id[i][j]][l]);
             }
+            print_tile_region(ftp_para->input_tiles[ftp_para->task_id[i][j]][l]);
          }
       }
    }
