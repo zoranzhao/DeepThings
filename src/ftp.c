@@ -254,13 +254,13 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
          for(l = ftp_para_reuse->fused_layers-1; l >= 0; l--){
             task = ftp_para_reuse->task_id[i][j];
             if(ftp_para_reuse->schedule[task] == 1){
-               ftp_para->input_tiles[ftp_para->task_id[i][j]][l] = 
-                       traversal(net_para, ftp_para->output_tiles[ftp_para->task_id[i][j]][l], l);
-               if(l>0) ftp_para_reuse->output_tiles[ftp_para->task_id[i][j]][l-1] 
+               ftp_para_reuse->input_tiles[ftp_para_reuse->task_id[i][j]][l] = 
+                       traversal(net_para, ftp_para_reuse->output_tiles[ftp_para_reuse->task_id[i][j]][l], l);
+               if(l>0) ftp_para_reuse->output_tiles[ftp_para_reuse->task_id[i][j]][l-1] 
                          = remove_and_record_overlapped_region_at_output(i, j, l-1,  ftp_para_reuse, 
-                                                      ftp_para_reuse->input_tiles[ftp_para->task_id[i][j]][l]);
+                                                      ftp_para_reuse->input_tiles[ftp_para_reuse->task_id[i][j]][l]);
             }
-            print_tile_region(ftp_para->input_tiles[ftp_para->task_id[i][j]][l]);
+            print_tile_region(ftp_para_reuse->input_tiles[ftp_para->task_id[i][j]][l]);
          }
       }
    }
