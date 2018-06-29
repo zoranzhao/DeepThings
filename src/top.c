@@ -284,7 +284,8 @@ int main(int argc, char **argv){
    init_queues(total_cli_num);
 
    cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(2, 2, 3, model->net_para);
+   model->ftp_para = preform_ftp(5, 5, 16, model->net_para);
+   model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 
 /*
    for(int i = 0; i < 2; i++){
