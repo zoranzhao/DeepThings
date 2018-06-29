@@ -250,7 +250,7 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
    }
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
-         printf("------------------(%3d,%3d)----------------\n", i, j);
+         /*printf("------------------(%3d,%3d)----------------\n", i, j);*/
          for(l = ftp_para_reuse->fused_layers-1; l >= 0; l--){
             task = ftp_para_reuse->task_id[i][j];
             if(ftp_para_reuse->schedule[task] == 1){
@@ -260,7 +260,12 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
                          = remove_and_record_overlapped_region_at_output(i, j, l-1,  ftp_para_reuse, 
                                                       ftp_para_reuse->input_tiles[ftp_para_reuse->task_id[i][j]][l]);
             }
+/*
+            printf("---(layer %3d)---\n", l);
+            print_tile_region(ftp_para_reuse->output_tiles[ftp_para->task_id[i][j]][l]);
             print_tile_region(ftp_para_reuse->input_tiles[ftp_para->task_id[i][j]][l]);
+            printf("---(layer %3d)---\n", l);
+*/
          }
       }
    }
