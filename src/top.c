@@ -284,21 +284,21 @@ int main(int argc, char **argv){
    init_queues(total_cli_num);
 
    cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(5, 5, 16, model->net_para);
+   model->ftp_para = preform_ftp(2, 2, 4, model->net_para);
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 
-/*
+
    for(int i = 0; i < 2; i++){
       for(int j = 0; j < 2; j++){
          printf("------------------(%3d,%3d)----------------\n", i, j);
          for(int l = 2; l >= 0; l--)
-            print_tile_region(model->ftp_para->output_tiles[model->ftp_para->task_id[i][j]][l]);
-         print_tile_region(model->ftp_para->input_tiles[model->ftp_para->task_id[i][j]][0]);
+            print_tile_region(model->ftp_para_reuse->output_tiles[model->ftp_para->task_id[i][j]][l]);
+         print_tile_region(model->ftp_para_reuse->input_tiles[model->ftp_para->task_id[i][j]][0]);
       }
    }
-*/
 
-   for(int frame_seq = 0; frame_seq < 4; frame_seq++){
+
+   for(int frame_seq = 0; frame_seq < 1; frame_seq++){
       image_holder img = load_image_as_model_input(model, frame_seq);
       partition_and_enqueue(model, frame_seq);
       blob* temp;
@@ -306,7 +306,10 @@ int main(int argc, char **argv){
       while(1){
          temp = try_dequeue(task_queue);
          if(temp == NULL) break;
-         set_model_input(model, (float*)temp->data);
+         if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))) 
+             set_model_input(model, (float*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
+         else set_model_input(model, (float*)temp->data);
+
          forward_partition(model, get_blob_task_id(temp));      
          result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
