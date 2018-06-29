@@ -182,16 +182,20 @@ void record_overlapped_output(cnn_model* model, uint32_t task_id,  uint32_t l, f
 float* stitch_reuse_output(cnn_model* model, uint32_t task_id,  uint32_t l, float* layer_output){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
-   float* stitched_data = (float*)malloc(ftp_para_reuse->output_tiles[task_id][l].w*ftp_para_reuse->output_tiles[task_id][l].h*net_para->output_maps[l].c*sizeof(float));
+   float* stitched_data = (float*)malloc(ftp_para_reuse->input_tiles[task_id][l+1].w*ftp_para_reuse->input_tiles[task_id][l+1].h*net_para->output_maps[l].c*sizeof(float));
    tile_region offset_index;
    /*stich the central region*/
    offset_index = relative_offsets(ftp_para_reuse->input_tiles[task_id][l+1], ftp_para_reuse->output_tiles[task_id][l]);
    stitch_feature_maps(layer_output, stitched_data,
-			ftp_para_reuse->output_tiles[task_id][l].w, 
-                        ftp_para_reuse->output_tiles[task_id][l].h, 
+			ftp_para_reuse->input_tiles[task_id][l+1].w, 
+                        ftp_para_reuse->input_tiles[task_id][l+1].h, 
                         net_para->output_maps[l].c, 
                         offset_index.w1, offset_index.w2, 
                         offset_index.h1, offset_index.h2);
+
+   if(net_para->type[l+1] == POOLING_LAYER) return stitched_data;
+
+   /*If the next layer is not pooling layer, then we need copy reuse data from adjacent partitions*/
    overlapped_tile_data regions_and_data; 
    uint32_t position;
    int32_t adjacent_id[4];
@@ -216,11 +220,11 @@ float* stitch_reuse_output(cnn_model* model, uint32_t task_id,  uint32_t l, floa
       regions_and_data = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
       overlap_index = get_region(&regions_and_data, mirror_position);
       if((overlap_index.w>0)&&(overlap_index.h>0)){
-         offset_index = relative_offsets(ftp_para_reuse->input_tiles[task_id][l+1], get_region(&regions_and_data, mirror_position));
+         offset_index = relative_offsets(ftp_para_reuse->input_tiles[task_id][l+1], overlap_index);
          stitch_feature_maps(get_data(&regions_and_data, mirror_position), 
                         stitched_data,
-			ftp_para_reuse->output_tiles[task_id][l].w, 
-                        ftp_para_reuse->output_tiles[task_id][l].h, 
+			ftp_para_reuse->input_tiles[task_id][l+1].w, 
+                        ftp_para_reuse->input_tiles[task_id][l+1].h, 
                         net_para->output_maps[l].c, 
                         offset_index.w1, offset_index.w2, 
                         offset_index.h1, offset_index.h2);
@@ -295,8 +299,6 @@ void forward_partition(cnn_model* model, uint32_t task_id){
 #endif
    }
    if (to_free == 1) free(cropped_output);
-
-
 
 #if DATA_REUSE
    if (to_free_next_layer_input == 1) free(stitched_next_layer_input);
