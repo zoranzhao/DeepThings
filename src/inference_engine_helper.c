@@ -159,6 +159,7 @@ void record_overlapped_output_for_current_layer(ftp_parameters_reuse* ftp_para_r
 void forward_partition(cnn_model* model, uint32_t task_id){
    network net = *(model->net);
    ftp_parameters* ftp_para = model->ftp_para;
+   ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    /*network_parameters* net_para = model->net_para;*/
    uint32_t l;
    for(l = 0; l < ftp_para->fused_layers; l++){
