@@ -109,7 +109,6 @@ float* dequeue_and_merge(cnn_model* model){
       if(net_para->type[ftp_para->fused_layers-1] == CONV_LAYER){
          tile_region tmp = relative_offsets(ftp_para->input_tiles[task][ftp_para->fused_layers-1], 
                                        ftp_para->output_tiles[task][ftp_para->fused_layers-1]);  
-         print_tile_region(tmp); 
          cropped_output = crop_feature_maps((float*)temp->data, 
                       ftp_para->input_tiles[task][ftp_para->fused_layers-1].w, 
                       ftp_para->input_tiles[task][ftp_para->fused_layers-1].h, 
