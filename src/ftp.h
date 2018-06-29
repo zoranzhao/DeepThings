@@ -1,6 +1,7 @@
 #ifndef FTP_H
 #define FTP_H
 #include "configure.h"
+#include <stdbool.h>
 
 typedef struct partition_range{
     int32_t w1;
@@ -37,6 +38,10 @@ typedef struct def_overlapped_data{
    float *right;
    float *up;
    float *left;
+   uint32_t down_size;
+   uint32_t right_size;
+   uint32_t up_size;
+   uint32_t left_size;
    tile_region down_region;
    tile_region right_region;
    tile_region left_region;
@@ -44,16 +49,26 @@ typedef struct def_overlapped_data{
 } overlapped_tile_data;
 
 typedef struct def_ftp_parameters_reuse{
+   float* shrinked_input[PARTITIONS_MAX];
+   uint32_t shrinked_input_size[PARTITIONS_MAX];
+   uint32_t coverage[PARTITIONS_MAX];
    uint32_t partitions;
    uint32_t partitions_w;
    uint32_t partitions_h;
    uint32_t fused_layers;
    uint32_t task_id[PARTITIONS_H_MAX][PARTITIONS_W_MAX];
-   uint32_t schedule[PARTITIONS_H_MAX][PARTITIONS_W_MAX];
+   uint32_t schedule[PARTITIONS_MAX];
    tile_region input_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
    tile_region output_tiles[PARTITIONS_MAX][FUSED_LAYERS_MAX];
    overlapped_tile_data output_reuse_regions[PARTITIONS_MAX][FUSED_LAYERS_MAX];
 } ftp_parameters_reuse;
+
+ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parameters* ftp_para);
+void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
+void clean_coverage(ftp_parameters_reuse* ftp_para_reuse);
+bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
+
+
 #endif
 
 ftp_parameters* preform_ftp(uint32_t N, uint32_t M, uint32_t fused_layers, network_parameters* net_para);

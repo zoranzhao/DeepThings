@@ -1,4 +1,5 @@
 #include "ftp.h"
+#include "configure.h"
 #include "inference_engine_helper.h"
 
 static inline void grid(network_parameters* net_para, ftp_parameters* ftp_para, uint32_t M, uint32_t N){
@@ -36,10 +37,14 @@ static inline void grid(network_parameters* net_para, ftp_parameters* ftp_para, 
    }
 
 }
-
-static inline void traversal(network_parameters* net_para, ftp_parameters* ftp_para, uint32_t l, uint32_t i, uint32_t j){
+/*
+Input:
+   ftp_para->output_tiles[ftp_para->task_id[i][j]][l]
+Output:
+   ftp_para->input_tiles[ftp_para->task_id[i][j]][l]; 
+*/
+static tile_region traversal(network_parameters* net_para, tile_region output, uint32_t l){
    tile_region input; 
-   tile_region output = ftp_para->output_tiles[ftp_para->task_id[i][j]][l]; 
    int32_t stride = net_para->stride[l];
    int32_t filter = net_para->filter[l];    
    int32_t w = net_para->input_maps[l].w;
@@ -58,7 +63,8 @@ static inline void traversal(network_parameters* net_para, ftp_parameters* ftp_p
    }
    input.w = input.w2 -input.w1 + 1;
    input.h = input.h2 -input.h1 + 1;
-   ftp_para->input_tiles[ftp_para->task_id[i][j]][l] = input; 
+   return input;
+
 }
 
 ftp_parameters* preform_ftp(uint32_t N, uint32_t M, uint32_t fused_layers, network_parameters* net_para){
@@ -79,7 +85,8 @@ ftp_parameters* preform_ftp(uint32_t N, uint32_t M, uint32_t fused_layers, netwo
    for(i = 0; i < ftp_para->partitions_h; i++){
       for(j = 0; j < ftp_para->partitions_w; j++){
          for(l = fused_layers-1; l >= 0; l--){
-            traversal(net_para, ftp_para, l, i, j);
+            ftp_para->input_tiles[ftp_para->task_id[i][j]][l] = 
+                       traversal(net_para, ftp_para->output_tiles[ftp_para->task_id[i][j]][l], l);
             if(l>0) ftp_para->output_tiles[ftp_para->task_id[i][j]][l-1] 
                      = ftp_para->input_tiles[ftp_para->task_id[i][j]][l];
          }
@@ -101,12 +108,12 @@ void reuse_aware_schedule(ftp_parameters_reuse* ftp_para_reuse){
    int32_t i, j;
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = (i) % 2; j < ftp_para_reuse->partitions_w; j = j + 2){ 
-         ftp_para_reuse->schedule[i][j] = 0;
+         ftp_para_reuse->schedule[ftp_para_reuse->task_id[i][j]] = 0;
       }
    }
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = (i + 1) % 2; j < ftp_para_reuse->partitions_w; j = j + 2){ 
-         ftp_para_reuse->schedule[i][j] = 1;
+         ftp_para_reuse->schedule[ftp_para_reuse->task_id[i][j]] = 1;
       }
    }
 }
@@ -197,14 +204,22 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
       }
    }
    reuse_aware_schedule(ftp_para_reuse);
-   grid(net_para, ftp_para_reuse, ftp_para_reuse->partitions_w, ftp_para_reuse->partitions_h);
+
+   /*Copy the grid output from normal ftp*/
+   for(i = 0; i < ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < ftp_para_reuse->partitions_w; j++){
+         task = ftp_para_reuse->task_id[i][j];
+         l = ftp_para_reuse->fused_layers-1;
+         ftp_para_reuse->output_tiles[task][l] = ftp_para->output_tiles[task][l];
+      }
+   }
 
    /*Calculate the tile regions with no reuse data dependency*/
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
+         task = ftp_para_reuse->task_id[i][j];
          for(l = fused_layers-1; l >= 0; l--){
-            task = ftp_para_reuse->task_id[i][j];
-            if(ftp_para_reuse->schedule[i][j] == 0){
+            if(ftp_para_reuse->schedule[task] == 0){
                /*If there is no dependency, just copy from normal ftp parameters*/
                ftp_para_reuse->input_tiles[task][l] = ftp_para->input_tiles[task][l];
                ftp_para_reuse->output_tiles[task][l] = ftp_para->output_tiles[task][l];
@@ -218,6 +233,10 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];
          for(l = fused_layers-1; l >= 0; l--){
+            ftp_para_reuse->output_reuse_regions[task][l].down_size = 0;
+            ftp_para_reuse->output_reuse_regions[task][l].right_size = 0;
+            ftp_para_reuse->output_reuse_regions[task][l].up_size = 0;
+            ftp_para_reuse->output_reuse_regions[task][l].left_size = 0;
             ftp_para_reuse->output_reuse_regions[task][l].right_region.h = 0;
             ftp_para_reuse->output_reuse_regions[task][l].right_region.w = 0;
             ftp_para_reuse->output_reuse_regions[task][l].down_region.h = 0;
@@ -233,8 +252,9 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          for(l = fused_layers-1; l >= 0; l--){
             task = ftp_para_reuse->task_id[i][j];
-            if(ftp_para_reuse->schedule[i][j] == 1){
-               traversal(net_para, ftp_para_reuse, l, i, j);
+            if(ftp_para_reuse->schedule[task] == 1){
+               ftp_para->input_tiles[ftp_para->task_id[i][j]][l] = 
+                       traversal(net_para, ftp_para->output_tiles[ftp_para->task_id[i][j]][l], l);
                if(l>0) ftp_para_reuse->output_tiles[ftp_para->task_id[i][j]][l-1] 
                          = remove_and_record_overlapped_region_at_output(i, j, l-1,  ftp_para_reuse, 
                                                       ftp_para_reuse->input_tiles[ftp_para->task_id[i][j]][l]);
@@ -245,8 +265,58 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
 
    /*Calculate the overlapped tile regions containing reuse data*/
    
-   
    return ftp_para_reuse;
+}
+
+void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+   ftp_para_reuse->coverage[task_id]=1;
+}
+
+void clean_coverage(ftp_parameters_reuse* ftp_para_reuse){
+   uint32_t task;
+   uint32_t i, j;
+   for(i = 0; i < ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < ftp_para_reuse->partitions_w; j++){
+         task = ftp_para_reuse->task_id[i][j];
+         ftp_para_reuse->coverage[task]=0;
+      }
+   }
+}
+
+bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+   uint32_t i = task_id/(ftp_para_reuse->partitions_w);
+   uint32_t j = task_id%(ftp_para_reuse->partitions_w);
+   uint32_t adj_task;
+   bool ready = true;
+   if(i + 1 < ftp_para_reuse->partitions_h){
+      adj_task = ftp_para_reuse->task_id[i+1][j];
+      if(ftp_para_reuse->coverage[adj_task] == 0) {
+         ready = false;
+         return ready;
+      }	
+   }
+   if(j + 1 < ftp_para_reuse->partitions_w){
+      adj_task = ftp_para_reuse->task_id[i][j+1];
+      if(ftp_para_reuse->coverage[adj_task] == 0) {
+         ready = false;
+         return ready;
+      }	
+   }
+   if(j > 0){
+      adj_task = ftp_para_reuse->task_id[i][j-1];
+      if(ftp_para_reuse->coverage[adj_task] == 0) {
+         ready = false;
+         return ready;
+      }	
+   }
+   if(i > 0){
+      adj_task = ftp_para_reuse->task_id[i-1][j];
+      if(ftp_para_reuse->coverage[adj_task] == 0) {
+         ready = false;
+         return ready;
+      }	
+   }
+   return ready;
 }
 
 #endif /*DATA_REUSE*/
