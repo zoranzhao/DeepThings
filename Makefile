@@ -5,7 +5,7 @@ VPATH=./src
 DARKIOT=../DarkIoT
 DARKNET=../nnpack_darknet/darknet-nnpack
 OBJDIR=./obj/
-EXEC=deep
+EXEC=deepthings
 DARKNETLIB=libdarknet.a
 DARKIOTLIB=libdarkiot.a
 
@@ -53,7 +53,7 @@ obj:
 	mkdir -p obj
 
 test:
-	./deep ${ARGS}
+	./deepthings ${ARGS}
 
 .PHONY: clean
 
