@@ -51,6 +51,7 @@ typedef struct def_overlapped_data{
 typedef struct def_ftp_parameters_reuse{
    float* shrinked_input[PARTITIONS_MAX];
    uint32_t shrinked_input_size[PARTITIONS_MAX];
+   uint32_t reuse_data_size[PARTITIONS_MAX];
    uint32_t coverage[PARTITIONS_MAX];
    uint32_t partitions;
    uint32_t partitions_w;

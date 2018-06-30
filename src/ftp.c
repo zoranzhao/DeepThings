@@ -199,6 +199,52 @@ tile_region remove_and_record_overlapped_region_at_output(uint32_t i, uint32_t j
    return remaining_region;
 }
 
+
+void calculate_reuse_data_size(ftp_parameters_reuse* ftp_para_reuse, network_parameters* net_para, uint32_t task_id){
+
+   uint32_t i = task_id/(ftp_para_reuse->partitions_w);
+   uint32_t j = task_id%(ftp_para_reuse->partitions_w);
+   int32_t adjacent_id[4];
+   uint32_t position;
+   uint32_t l;
+   overlapped_tile_data regions_and_data;
+   tile_region overlap_index;
+   for(position = 0; position < 4; position++){
+      adjacent_id[position] = -1;
+   }
+
+   /*position encoding
+         2
+         |
+   3 <- self -> 1
+         |
+         0
+   */
+
+   /*get the up overlapped data from tile below*/
+   if((i+1)<(ftp_para_reuse->partitions_h)) adjacent_id[0] = ftp_para_reuse->task_id[i+1][j];
+   /*get the left overlapped data from tile on the right*/
+   if((j+1)<(ftp_para_reuse->partitions_w)) adjacent_id[1] = ftp_para_reuse->task_id[i][j+1];
+   /*get the bottom overlapped data from tile above*/
+   if(i>0) adjacent_id[2] = ftp_para_reuse->task_id[i-1][j];
+   /*get the right overlapped data from tile on the left*/
+   if(j>0) adjacent_id[3] = ftp_para_reuse->task_id[i][j-1];
+
+   ftp_para_reuse->reuse_data_size[task_id]=0;
+
+   for(l = 0; l < ftp_para_reuse->fused_layers-1; l++){
+      for(position = 0; position < 4; position++){
+         if(adjacent_id[position]==-1) continue;
+         uint32_t mirror_position = (position + 2)%4;
+         regions_and_data = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
+         overlap_index = get_region(&regions_and_data, mirror_position);
+         if((overlap_index.w>0)&&(overlap_index.h>0))
+            ftp_para_reuse->reuse_data_size[task_id] += sizeof(float)*overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+      }
+   }
+}
+
+
 /*This function must be called after perform_ftp()*/
 ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parameters* ftp_para){
    int32_t i, j, l;
@@ -283,8 +329,13 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
       }
    }
 
-   /*Calculate the overlapped tile regions containing reuse data*/
-   
+   for(i = 0; i < ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < ftp_para_reuse->partitions_w; j++){
+         task = ftp_para_reuse->task_id[i][j];
+         calculate_reuse_data_size(ftp_para_reuse, net_para, task);/*Will be used in reuse_data serialization*/
+      }
+   }
+
    return ftp_para_reuse;
 }
 
@@ -339,6 +390,14 @@ bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    return ready;
 }
 
+
+/*position encoding
+         2
+         |
+   3 <- self -> 1
+         |
+         0
+*/
 
 tile_region get_region(overlapped_tile_data * overlap, uint32_t pos){
    if(pos == 0) return overlap->down_region;
