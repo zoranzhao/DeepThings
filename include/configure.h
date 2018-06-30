@@ -11,6 +11,7 @@
 
 #define DEBUG_INFERENCE 0
 #define DEBUG_FTP 0
+#define DEBUG_SERIALIZATION 0
 
 #include <stdint.h>
 
