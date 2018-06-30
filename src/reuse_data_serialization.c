@@ -66,11 +66,20 @@ blob* reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t fram
       for(position = 0; position < 4; position++){
          if(adjacent_id[position]==-1) continue;
          if(reuse_data_is_required[position]==false) continue;
+#if DEBUG_SERIALIZATION
+         printf("Serialize adj reuse data for partition %d: \n",adjacent_id[position]);
+#endif
          uint32_t mirror_position = (position + 2)%4;
          regions_and_data = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
          overlap_index = get_region(&regions_and_data, mirror_position);
          if((overlap_index.w>0)&&(overlap_index.h>0)){
             uint32_t amount_of_element = overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+#if DEBUG_SERIALIZATION
+            if(position==0) printf("Below overlapped amount is %d \n",amount_of_element);
+            if(position==1) printf("Right overlapped amount is %d \n",amount_of_element);
+            if(position==2) printf("Above overlapped amount is %d \n",amount_of_element);
+            if(position==3) printf("Left overlapped amount is %d \n",amount_of_element);
+#endif
             memcpy(reuse_data, get_data(&regions_and_data, mirror_position), amount_of_element*sizeof(float) ); 
             reuse_data = reuse_data + amount_of_element;
             size += amount_of_element;
@@ -117,16 +126,31 @@ overlapped_tile_data** reuse_data_deserialization(cnn_model* model, uint32_t tas
       for(position = 0; position < 4; position++){
          if(adjacent_id[position]==-1) continue;
          if(reuse_data_is_required[position]==false) continue;
+#if DEBUG_SERIALIZATION
+         printf("Deserialize adj reuse data for partition %d: \n",adjacent_id[position]);
+#endif
          uint32_t mirror_position = (position + 2)%4;
+
+         overlapped_tile_data original = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
+         overlap_index = get_region(&original, mirror_position);
+/*
          regions_and_data_ptr_array[position][l] = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
+*/
          overlapped_tile_data* regions_and_data_ptr = regions_and_data_ptr_array[position];
-         overlap_index = get_region(regions_and_data_ptr+l, mirror_position);
          if((overlap_index.w>0)&&(overlap_index.h>0)){
+            uint32_t amount_of_element = overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+#if DEBUG_SERIALIZATION
+            if(position==0) printf("Below overlapped amount is %d \n",amount_of_element);
+            if(position==1) printf("Right overlapped amount is %d \n",amount_of_element);
+            if(position==2) printf("Above overlapped amount is %d \n",amount_of_element);
+            if(position==3) printf("Left overlapped amount is %d \n",amount_of_element);
+#endif
+/*
             if(get_size(regions_and_data_ptr+l, mirror_position)>0) {
                free(get_data(regions_and_data_ptr+l, mirror_position));
                set_size(regions_and_data_ptr+l, mirror_position, 0);
             }
-            uint32_t amount_of_element = overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+*/
             float* data = (float* )malloc(amount_of_element*sizeof(float));
             memcpy(data, serial_data, amount_of_element*sizeof(float)); 
             serial_data = serial_data + amount_of_element;
@@ -165,6 +189,9 @@ void place_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile
       for(position = 0; position < 4; position++){
          if(adjacent_id[position]==-1) continue;
          if(reuse_data_is_required[position]==false) continue;
+#if DEBUG_SERIALIZATION
+         printf("Place adj reuse data for partition %d: \n",adjacent_id[position]);
+#endif
          uint32_t mirror_position = (position + 2)%4;
          regions_and_data = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
          overlap_index = get_region(&regions_and_data, mirror_position);
@@ -172,6 +199,20 @@ void place_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile
             regions_and_data_to_be_placed = regions_and_data_ptr_array[position][l];
             uint32_t size = get_size(&regions_and_data_to_be_placed, mirror_position);
             float* data = get_data(&regions_and_data_to_be_placed, mirror_position);
+#if DEBUG_SERIALIZATION
+            uint32_t amount_of_element = size/sizeof(float);
+            if(position==0) printf("Place below overlapped amount is %d \n",amount_of_element);
+            if(position==1) printf("Place right overlapped amount is %d \n",amount_of_element);
+            if(position==2) printf("Place above overlapped amount is %d \n",amount_of_element);
+            if(position==3) printf("Place left overlapped amount is %d \n",amount_of_element);
+#endif
+            if(get_size(&regions_and_data, mirror_position)>0) {
+#if DEBUG_SERIALIZATION
+               printf("free old data for partition %ld \n", get_size(&regions_and_data, mirror_position)/sizeof(float));
+#endif
+               free(get_data(&regions_and_data, mirror_position));
+               set_size(&regions_and_data, mirror_position, 0);
+            }
             set_data(&regions_and_data, mirror_position, data);
             set_size(&regions_and_data, mirror_position, size);
          }
