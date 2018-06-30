@@ -4,6 +4,7 @@
 #include "ftp.h"
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
+#include "reuse_data_serialization.h"
 #include <string.h>
 
 static thread_safe_queue* q; 
@@ -310,6 +311,44 @@ int main(int argc, char **argv){
          if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))) {
              set_model_input(model, (float*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
              printf("Reuse ... %d\n", temp->id);
+             //clean_coverage(model->ftp_para_reuse);
+             model->ftp_para_reuse->coverage[0] = 0;
+             model->ftp_para_reuse->coverage[2] = 0;
+             model->ftp_para_reuse->coverage[4] = 0;
+             model->ftp_para_reuse->coverage[6] = 0;
+             model->ftp_para_reuse->coverage[8] = 0;
+             model->ftp_para_reuse->coverage[10] = 0;
+             model->ftp_para_reuse->coverage[12] = 0;
+             model->ftp_para_reuse->coverage[14] = 0;
+             model->ftp_para_reuse->coverage[16] = 0;
+             model->ftp_para_reuse->coverage[18] = 0;
+             model->ftp_para_reuse->coverage[20] = 0;
+             model->ftp_para_reuse->coverage[22] = 0;
+             model->ftp_para_reuse->coverage[24] = 0;
+             bool* tmp = check_local_coverage(model, temp->id, frame_seq);
+             printf("Down %d\n",  tmp[0]);
+             printf("Right %d\n", tmp[1]);
+             printf("Up %d\n",    tmp[2]);
+             printf("Left %d\n",  tmp[3]);
+             blob* reuse_blob = reuse_data_serialization(model, temp->id, frame_seq, tmp); 
+             overlapped_tile_data** temp_region_and_data = reuse_data_deserialization(model, temp->id, (float*)reuse_blob->data, frame_seq, tmp);
+             place_deserialized_data(model, temp->id, temp_region_and_data, tmp);
+             free(tmp);
+             free_overlapped_tile_data_ptr_array(temp_region_and_data);
+             free_blob(reuse_blob);
+             set_coverage(model->ftp_para_reuse, 0);
+             set_coverage(model->ftp_para_reuse, 2);
+             set_coverage(model->ftp_para_reuse, 4);
+             set_coverage(model->ftp_para_reuse, 6);
+             set_coverage(model->ftp_para_reuse, 8);
+             set_coverage(model->ftp_para_reuse, 10);
+             set_coverage(model->ftp_para_reuse, 12);
+             set_coverage(model->ftp_para_reuse, 14);
+             set_coverage(model->ftp_para_reuse, 16);
+             set_coverage(model->ftp_para_reuse, 18);
+             set_coverage(model->ftp_para_reuse, 20);
+             set_coverage(model->ftp_para_reuse, 22);
+             set_coverage(model->ftp_para_reuse, 24);
          }
          else 
             set_model_input(model, (float*)temp->data);
@@ -325,6 +364,7 @@ int main(int argc, char **argv){
          free_blob(temp);
 
       }
+
 
 
       enqueue(ready_pool, new_empty_blob(this_cli_id));
