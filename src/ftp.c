@@ -343,6 +343,10 @@ void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    ftp_para_reuse->coverage[task_id]=1;
 }
 
+uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+   return ftp_para_reuse->coverage[task_id];
+}
+
 void clean_coverage(ftp_parameters_reuse* ftp_para_reuse){
    uint32_t task;
    uint32_t i, j;

@@ -65,6 +65,7 @@ typedef struct def_ftp_parameters_reuse{
 } ftp_parameters_reuse;
 
 ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parameters* ftp_para);
+uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
 void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
 void clean_coverage(ftp_parameters_reuse* ftp_para_reuse);
 bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
