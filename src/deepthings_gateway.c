@@ -37,6 +37,9 @@ void* deepthings_result_gateway(void* srv_conn){
    results_counter[cli_id]++;
    if(results_counter[cli_id] == PARTITIONS_H*PARTITIONS_W){
       temp = new_empty_blob(cli_id);
+#if DEBUG_FLAG
+      printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
+#endif
       enqueue(ready_pool, temp);
       free_blob(temp);
       results_counter[cli_id] = 0;
@@ -63,7 +66,7 @@ void deepthings_merge_result_thread(void *arg){
    int32_t cli_id = temp->id;
    free_blob(temp);
 #if DEBUG_FLAG
-   printf("Results for client %d are all collected\n", cli_id);
+   printf("Results for client %d are all collected in deepthings_merge_result_thread\n", cli_id);
 #endif
    temp = dequeue_and_merge(model);
    float* fused_output = (float*)(temp->data);
