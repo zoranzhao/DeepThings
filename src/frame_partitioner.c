@@ -100,8 +100,8 @@ blob* dequeue_and_merge(cnn_model* model){
    uint32_t stage_out_size = sizeof(float)*stage_outs;  
    uint32_t part = 0;
    uint32_t task = 0;
-   uint32_t cli_id;
-   uint32_t frame_num;
+   uint32_t cli_id = 0;
+   uint32_t frame_num = 0;
    float* cropped_output;
 
    for(part = 0; part < ftp_para->partitions; part ++){
