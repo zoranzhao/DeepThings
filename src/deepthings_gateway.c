@@ -64,11 +64,13 @@ void deepthings_merge_result_thread(void *arg){
 #endif
    blob* temp;
    int32_t cli_id;
+   int32_t frame_seq;
    while(1){
       temp = dequeue_and_merge(model);
       cli_id = get_blob_cli_id(temp);
+      frame_seq = get_blob_frame_seq(temp);
 #if DEBUG_FLAG
-      printf("Results for client %d are all collected in deepthings_merge_result_thread\n", cli_id);
+      printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
 #endif
       float* fused_output = (float*)(temp->data);
       image_holder img = load_image_as_model_input(model, get_blob_frame_seq(temp));
@@ -78,7 +80,7 @@ void deepthings_merge_result_thread(void *arg){
       free_image_holder(model, img);
       free_blob(temp);
 #if DEBUG_FLAG
-      printf("Results for client %d are all processed\n", cli_id);
+      printf("Client %d, frame sequence number %d, finish processing\n", cli_id, frame_seq);
 #endif
    }
 #ifdef NNPACK

@@ -87,8 +87,9 @@ blob* dequeue_and_merge(cnn_model* model){
    /*Check if there is a data frame whose tasks have all been collected*/
    blob* temp = dequeue(ready_pool);
 #if DEBUG_FLAG
-   printf("Results for client %d are all collected\n", temp->id);
+   printf("Check ready_pool... : Client %d is ready, merging the results\n", temp->id);
 #endif
+   uint32_t cli_id = temp->id;
    free_blob(temp);
 
    ftp_parameters *ftp_para = model->ftp_para;
@@ -100,14 +101,12 @@ blob* dequeue_and_merge(cnn_model* model){
    uint32_t stage_out_size = sizeof(float)*stage_outs;  
    uint32_t part = 0;
    uint32_t task = 0;
-   uint32_t cli_id = 0;
    uint32_t frame_num = 0;
    float* cropped_output;
 
    for(part = 0; part < ftp_para->partitions; part ++){
       temp = dequeue(results_pool[cli_id]);
       task = get_blob_task_id(temp);
-      cli_id = get_blob_cli_id(temp);
       frame_num = get_blob_frame_seq(temp);
 
       if(net_para->type[ftp_para->fused_layers-1] == CONV_LAYER){
