@@ -248,7 +248,6 @@ float* stitch_reuse_output(cnn_model* model, uint32_t task_id,  uint32_t l, floa
 void forward_partition(cnn_model* model, uint32_t task_id){
    network net = *(model->net);
    ftp_parameters* ftp_para = model->ftp_para;
-   ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    /*network_parameters* net_para = model->net_para;*/
    uint32_t l;
    for(l = 0; l < ftp_para->fused_layers; l++){
@@ -262,6 +261,7 @@ void forward_partition(cnn_model* model, uint32_t task_id){
    uint32_t to_free = 0;
    float * cropped_output;
 #if DATA_REUSE
+   ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    if((model->ftp_para_reuse->schedule[task_id] == 1)&&is_reuse_ready(model->ftp_para_reuse, task_id)){
       for(l = 0; l < ftp_para_reuse->fused_layers; l++){
          net.layers[l].h = ftp_para_reuse->input_tiles[task_id][l].h;
