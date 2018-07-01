@@ -13,7 +13,7 @@
 #define DEBUG_FTP 0
 #define DEBUG_SERIALIZATION 0
 
-#define FUSED_LAYERS 4
+#define FUSED_LAYERS 16
 #define PARTITIONS_W 3
 #define PARTITIONS_H 3
 
