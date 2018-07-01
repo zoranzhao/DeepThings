@@ -285,9 +285,10 @@ int main(int argc, char **argv){
    init_queues(total_cli_num);
 
    cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(5, 5, 16, model->net_para);
+   model->ftp_para = preform_ftp(2, 2, 4, model->net_para);
+#if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
-
+#endif
 /*
    for(int i = 0; i < 2; i++){
       for(int j = 0; j < 2; j++){
@@ -308,6 +309,7 @@ int main(int argc, char **argv){
          temp = try_dequeue(task_queue);
          if(temp == NULL) break;
          printf("Task id is %d\n", temp->id);
+#if DATA_REUSE
          if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))) {
              set_model_input(model, (float*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
              printf("Reuse ... %d\n", temp->id);
@@ -351,7 +353,8 @@ int main(int argc, char **argv){
              set_coverage(model->ftp_para_reuse, 24);
          }
          else 
-            set_model_input(model, (float*)temp->data);
+#endif
+         set_model_input(model, (float*)temp->data);
          forward_partition(model, get_blob_task_id(temp));  
          result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
@@ -368,8 +371,8 @@ int main(int argc, char **argv){
 
 
       enqueue(ready_pool, new_empty_blob(this_cli_id));
-
-      float* fused_output = dequeue_and_merge(model);
+      temp = (dequeue_and_merge(model));
+      float* fused_output = (float* )temp->data;
       set_model_input(model, fused_output);
       forward_all(model, model->ftp_para->fused_layers);   
       free(fused_output);
