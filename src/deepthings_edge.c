@@ -119,9 +119,11 @@ void send_result_thread;
 void serve_stealing_thread;
 */
 void deepthings_stealer_edge(){
-   exec_barrier(START_CTRL, TCP);
+
 
    cnn_model* model = deepthings_edge_init();
+   exec_barrier(START_CTRL, TCP);
+
    sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
 
@@ -131,9 +133,11 @@ void deepthings_stealer_edge(){
 }
 
 void deepthings_victim_edge(){
-   exec_barrier(START_CTRL, TCP);
+
 
    cnn_model* model = deepthings_edge_init();
+   exec_barrier(START_CTRL, TCP);
+
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
    sys_thread_t t3 = sys_thread_new("serve_stealing_thread", serve_stealing_thread, model, 0, 0);
