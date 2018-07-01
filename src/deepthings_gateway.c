@@ -73,7 +73,6 @@ void deepthings_merge_result_thread(void *arg){
    image_holder img = load_image_as_model_input(model, get_blob_frame_seq(temp));
    set_model_input(model, fused_output);
    forward_all(model, model->ftp_para->fused_layers);   
-   free(fused_output);
    draw_object_boxes(model, get_blob_frame_seq(temp));
    free_image_holder(model, img);
    free_blob(temp);
