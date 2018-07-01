@@ -74,6 +74,9 @@ void deepthings_merge_result_thread(void *arg){
    draw_object_boxes(model, get_blob_frame_seq(temp));
    free_image_holder(model, img);
    free_blob(temp);
+#if DEBUG_FLAG
+   printf("Results for client %d are all processed\n", cli_id);
+#endif
 #ifdef NNPACK
    pthreadpool_destroy(model->net->threadpool);
    nnp_deinitialize();
