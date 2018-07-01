@@ -55,6 +55,10 @@ void deepthings_collect_result_thread(void *arg){
 
 void deepthings_merge_result_thread(void *arg){
    cnn_model* model = (cnn_model*)arg;
+#ifdef NNPACK
+   nnp_initialize();
+   model->net->threadpool = pthreadpool_create(THREAD_NUM);
+#endif
    blob* temp = dequeue(ready_pool);
    int32_t cli_id = temp->id;
    free_blob(temp);
@@ -70,6 +74,10 @@ void deepthings_merge_result_thread(void *arg){
    draw_object_boxes(model, get_blob_frame_seq(temp));
    free_image_holder(model, img);
    free_blob(temp);
+#ifdef NNPACK
+   pthreadpool_destroy(model->net->threadpool);
+   nnp_deinitialize();
+#endif
 }
 
 /*defined in gateway.h from darkiot

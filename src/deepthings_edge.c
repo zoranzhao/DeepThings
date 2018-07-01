@@ -34,7 +34,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
    cnn_model* model = (cnn_model*)arg;
 #ifdef NNPACK
    nnp_initialize();
-   net->threadpool = pthreadpool_create(THREAD_NUM);
+   model->net->threadpool = pthreadpool_create(THREAD_NUM);
 #endif
    blob* temp;
    uint32_t frame_num;
@@ -66,7 +66,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
       cancel_client();
    }
 #ifdef NNPACK
-   pthreadpool_destroy(netp->threadpool);
+   pthreadpool_destroy(model->net->threadpool);
    nnp_deinitialize();
 #endif
 }
@@ -77,6 +77,10 @@ void partition_frame_and_perform_inference_thread(void *arg){
 void steal_partition_and_perform_inference_thread(void *arg){
    cnn_model* model = (cnn_model*)arg;
    /*Check gateway for possible stealing victims*/
+#ifdef NNPACK
+   nnp_initialize();
+   model->net->threadpool = pthreadpool_create(THREAD_NUM);
+#endif
    service_conn* conn;
    blob* temp;
    while(1){
@@ -103,6 +107,10 @@ void steal_partition_and_perform_inference_thread(void *arg){
       process_task(model, temp);
       free_blob(temp);
    }
+#ifdef NNPACK
+   pthreadpool_destroy(model->net->threadpool);
+   nnp_deinitialize();
+#endif
 }
 
 
