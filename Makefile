@@ -1,4 +1,6 @@
 OPENMP=1
+NNPACK=0
+ARM_NEON=0
 DEBUG=1
 
 VPATH=./src
@@ -23,6 +25,12 @@ ifeq ($(DEBUG), 1)
 OPTS+=-O0 -g
 else
 OPTS+=-Ofast
+endif
+
+ifeq ($(NNPACK), 1)
+COMMON+= -DNNPACK
+CFLAGS+= -DNNPACK
+LDFLAGS+= -lnnpack -lpthreadpool
 endif
 
 ifeq ($(ARM_NEON), 1)
