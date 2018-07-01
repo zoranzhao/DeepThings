@@ -1,4 +1,5 @@
 #include "reuse_data_serialization.h"
+#if DATA_REUSE
 bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_num){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
 
@@ -230,5 +231,5 @@ void free_overlapped_tile_data_ptr_array(overlapped_tile_data** regions_and_data
    }
    free(regions_and_data_ptr_array);
 }
-
+#endif
 
