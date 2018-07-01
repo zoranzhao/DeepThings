@@ -64,21 +64,23 @@ void deepthings_merge_result_thread(void *arg){
 #endif
    blob* temp;
    int32_t cli_id;
-   temp = dequeue_and_merge(model);
-   cli_id = get_blob_cli_id(temp);
+   while(1){
+      temp = dequeue_and_merge(model);
+      cli_id = get_blob_cli_id(temp);
 #if DEBUG_FLAG
-   printf("Results for client %d are all collected in deepthings_merge_result_thread\n", cli_id);
+      printf("Results for client %d are all collected in deepthings_merge_result_thread\n", cli_id);
 #endif
-   float* fused_output = (float*)(temp->data);
-   image_holder img = load_image_as_model_input(model, get_blob_frame_seq(temp));
-   set_model_input(model, fused_output);
-   forward_all(model, model->ftp_para->fused_layers);   
-   draw_object_boxes(model, get_blob_frame_seq(temp));
-   free_image_holder(model, img);
-   free_blob(temp);
+      float* fused_output = (float*)(temp->data);
+      image_holder img = load_image_as_model_input(model, get_blob_frame_seq(temp));
+      set_model_input(model, fused_output);
+      forward_all(model, model->ftp_para->fused_layers);   
+      draw_object_boxes(model, get_blob_frame_seq(temp));
+      free_image_holder(model, img);
+      free_blob(temp);
 #if DEBUG_FLAG
-   printf("Results for client %d are all processed\n", cli_id);
+      printf("Results for client %d are all processed\n", cli_id);
 #endif
+   }
 #ifdef NNPACK
    pthreadpool_destroy(model->net->threadpool);
    nnp_deinitialize();
