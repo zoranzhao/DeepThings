@@ -83,28 +83,32 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
 
 }
 
-float* dequeue_and_merge(cnn_model* model){
+blob* dequeue_and_merge(cnn_model* model){
    /*Check if there is a data frame whose tasks have all been collected*/
    blob* temp = dequeue(ready_pool);
-   int32_t cli_id = temp->id;
-   free_blob(temp);
 #if DEBUG_FLAG
-   printf("Results for client %d are all collected\n", cli_id);
+   printf("Results for client %d are all collected\n", temp->id);
 #endif
+   free_blob(temp);
+
    ftp_parameters *ftp_para = model->ftp_para;
    network_parameters *net_para = model->net_para;
 
 
    uint32_t stage_outs =  (net_para->output_maps[ftp_para->fused_layers-1].w)*(net_para->output_maps[ftp_para->fused_layers-1].h)*(net_para->output_maps[ftp_para->fused_layers-1].c);
    float* stage_out = (float*) malloc(sizeof(float)*stage_outs);  
+   uint32_t stage_out_size = sizeof(float)*stage_outs;  
    uint32_t part = 0;
    uint32_t task = 0;
+   uint32_t cli_id;
+   uint32_t frame_num;
    float* cropped_output;
 
    for(part = 0; part < ftp_para->partitions; part ++){
       temp = dequeue(results_pool[cli_id]);
       task = get_blob_task_id(temp);
-      
+      cli_id = get_blob_cli_id(temp);
+      frame_num = get_blob_frame_seq(temp);
 
       if(net_para->type[ftp_para->fused_layers-1] == CONV_LAYER){
          tile_region tmp = relative_offsets(ftp_para->input_tiles[task][ftp_para->fused_layers-1], 
@@ -129,6 +133,10 @@ float* dequeue_and_merge(cnn_model* model){
 
       free_blob(temp);
    }
-   return stage_out;
+
+   temp = new_blob_and_copy_data(cli_id, stage_out_size, (uint8_t*)stage_out);
+   free(stage_out);
+   annotate_blob(temp, cli_id, frame_num, task);
+   return temp;
 }
 
