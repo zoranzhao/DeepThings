@@ -62,13 +62,13 @@ void deepthings_merge_result_thread(void *arg){
    nnp_initialize();
    model->net->threadpool = pthreadpool_create(THREAD_NUM);
 #endif
-   blob* temp = dequeue(ready_pool);
-   int32_t cli_id = temp->id;
-   free_blob(temp);
+   blob* temp;
+   int32_t cli_id;
+   temp = dequeue_and_merge(model);
+   cli_id = get_blob_cli_id(temp);
 #if DEBUG_FLAG
    printf("Results for client %d are all collected in deepthings_merge_result_thread\n", cli_id);
 #endif
-   temp = dequeue_and_merge(model);
    float* fused_output = (float*)(temp->data);
    image_holder img = load_image_as_model_input(model, get_blob_frame_seq(temp));
    set_model_input(model, fused_output);
