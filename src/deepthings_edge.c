@@ -1,12 +1,19 @@
 #include "deepthings_edge.h"
+#include "config.h"
+#include "ftp.h"
+#include "inference_engine_helper.h"
+#include "frame_partitioner.h"
+#include "reuse_data_serialization.h"
 
-void deepthings_edge_init(cnn_model* model){
+cnn_model* deepthings_edge_init(){
    init_client();
+   cnn_model* model;
    model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
    model->ftp_para = preform_ftp(PARTITIONS_H, PARTITIONS_W, FUSED_LAYERS, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
+   return model;
 }
 
 static inline void process_task(cnn_model* model, blob* temp){
@@ -29,7 +36,6 @@ void partition_frame_and_perform_inference_thread(void *arg){
    nnp_initialize();
    net->threadpool = pthreadpool_create(THREAD_NUM);
 #endif
-   uint32_t task;
    blob* temp;
    uint32_t frame_num;
    for(frame_num = 0; frame_num < FRAME_NUM; frame_num ++){
@@ -37,7 +43,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
       /*recv_img()*/
 
       /*Load image and partition, fill task queues*/
-      image_holder img = load_image_as_model_input(model, frame_num);
+      load_image_as_model_input(model, frame_num);
       partition_and_enqueue(model, frame_num);
       register_client();
 
@@ -100,15 +106,14 @@ void steal_partition_and_perform_inference_thread(void *arg){
 }
 
 
-
+/*defined in gateway.h from darkiot
 void send_result_thread;
 void serve_stealing_thread;
-
+*/
 void deepthings_stealer_edge(){
    exec_barrier(START_CTRL, TCP);
 
-   cnn_model* model;
-   deepthings_edge_init(model);
+   cnn_model* model = deepthings_edge_init();
    sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
 
@@ -120,8 +125,7 @@ void deepthings_stealer_edge(){
 void deepthings_victim_edge(){
    exec_barrier(START_CTRL, TCP);
 
-   cnn_model* model;
-   deepthings_edge_init(model);
+   cnn_model* model = deepthings_edge_init();
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
    sys_thread_t t3 = sys_thread_new("serve_stealing_thread", serve_stealing_thread, model, 0, 0);

@@ -1,12 +1,18 @@
 #include "deepthings_gateway.h"
+#include "config.h"
+#include "ftp.h"
+#include "inference_engine_helper.h"
+#include "frame_partitioner.h"
+#include "reuse_data_serialization.h"
 
-void deepthings_gateway_init(cnn_model* model){
+cnn_model* deepthings_gateway_init(){
    init_gateway();
-   model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
+   cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
    model->ftp_para = preform_ftp(PARTITIONS_H, PARTITIONS_W, FUSED_LAYERS, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
+   return model;
 }
 
 void* deepthings_result_gateway(void* srv_conn){
@@ -66,12 +72,13 @@ void deepthings_merge_result_thread(void *arg){
    free_blob(temp);
 }
 
-
+/*defined in gateway.h from darkiot
 void work_stealing_thread;
+*/
+
 
 void deepthings_gateway(){
-   cnn_model* model;
-   deepthings_gateway_init(model);
+   cnn_model* model = deepthings_gateway_init();
 
    sys_thread_t t3 = sys_thread_new("work_stealing_thread", work_stealing_thread, NULL, 0, 0);
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);

@@ -39,7 +39,7 @@ CFLAGS+= -DARM_NEON -mfpu=neon-vfpv4 -funsafe-math-optimizations -ftree-vectoriz
 endif
 
 CFLAGS+=$(OPTS)
-OBJS = configure.o top.o ftp.o inference_engine_helper.o frame_partitioner.o reuse_data_serialization.o
+OBJS = configure.o top.o ftp.o inference_engine_helper.o frame_partitioner.o reuse_data_serialization.o deepthings_edge.o deepthings_gateway.o
 EXECOBJ = $(addprefix $(OBJDIR), $(OBJS))
 DEPS = $(wildcard */*.h) Makefile
 
