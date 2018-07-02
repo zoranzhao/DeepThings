@@ -4,6 +4,7 @@
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
+static cnn_model* edge_model;
 
 cnn_model* deepthings_edge_init(){
    init_client();
@@ -12,8 +13,6 @@ cnn_model* deepthings_edge_init(){
    model->ftp_para = preform_ftp(PARTITIONS_H, PARTITIONS_W, FUSED_LAYERS, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
-   shrinked_task_queue = new_queue(MAX_QUEUE_SIZE);
-   schedule_task_queue = new_queue(MAX_QUEUE_SIZE);
 #endif
    return model;
 }
@@ -117,18 +116,17 @@ void partition_frame_and_perform_inference_thread(void *arg){
          if(temp == NULL) break;
          printf("Task id is %d\n", temp->id);
 #if DATA_REUSE
-         blob *schedule = dequeue(schedule_task_queue);
-         if(get_blob_task_id(schedule)==1){
-            free_blob(temp);
-            temp = dequeue(shrinked_task_queue);
-         }
-         free_blob(schedule);
 /*
-         if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))) {
-             set_model_input(model, (float*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
-         }
-         else
+&& is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))
 */
+         if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) {
+            blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
+                       (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
+                       (uint8_t*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
+            copy_blob_meta(shrinked_temp, temp);
+            free_blob(temp);
+            temp = shrinked_temp;
+         }
 #endif
          process_task(model, temp);
          free_blob(temp);
@@ -205,16 +203,15 @@ void* steal_client_reuse_aware(void* srv_conn){
 #if DEBUG_DEEP_EDGE
    printf("Stolen local task is %d\n", temp->id);
 #endif
-
-   blob* schedule = dequeue(schedule_task_queue);
-   if(get_blob_task_id(schedule)==1){
-#if DEBUG_DEEP_EDGE
-      printf("Send reuse data!\n");
-#endif
+   if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) {
+      blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
+                       (edge_model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
+                       (uint8_t*)(edge_model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
+      copy_blob_meta(shrinked_temp, temp);
       free_blob(temp);
-      temp = dequeue(shrinked_task_queue);
+      temp = shrinked_temp;
    }
-   free_blob(schedule); 
+
    send_data(temp, conn);
    free_blob(temp);
    return NULL;
@@ -252,6 +249,7 @@ void deepthings_victim_edge(){
 
 
    cnn_model* model = deepthings_edge_init();
+   edge_model = model;
    exec_barrier(START_CTRL, TCP);
 
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);
