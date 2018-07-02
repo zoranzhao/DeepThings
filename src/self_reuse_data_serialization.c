@@ -1,7 +1,6 @@
 #include "reuse_data_serialization.h"
 #if DATA_REUSE
 
-
 blob* self_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
@@ -84,6 +83,7 @@ overlapped_tile_data* self_reuse_data_deserialization(cnn_model* model, uint32_t
 
    for(l = 0; l < ftp_para_reuse->fused_layers-1; l ++){
       for(position = 0; position < 4; position++){
+         set_size(regions_and_data_ptr+l, position, 0);/*Initialize to zero, as an indicator of future free memory*/
          if(adjacent_id[position]==-1) continue;
          overlapped_tile_data original = ftp_para_reuse->output_reuse_regions[task_id][l];
          overlap_index = get_region(&original, position);
@@ -107,6 +107,20 @@ overlapped_tile_data* self_reuse_data_deserialization(cnn_model* model, uint32_t
    return regions_and_data_ptr;
 }
 
+void free_self_overlapped_tile_data(cnn_model* model,  overlapped_tile_data* tiles){
+   ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
+   uint32_t position;
+   uint32_t l;
+   for(l = 0; l < ftp_para_reuse->fused_layers-1; l ++){
+      for(position = 0; position < 4; position++){
+         if(get_size(tiles+l, position)>0){
+            free(get_data(tiles+l, position));
+         }
+      }
+   }
+   free(tiles);
+
+}
 void place_self_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile_data* regions_and_data_ptr){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    overlapped_tile_data regions_and_data;
@@ -145,15 +159,6 @@ void place_self_deserialized_data(cnn_model* model, uint32_t task_id, overlapped
             if(position==2) printf("Place self above overlapped amount is %d at layer %d\n",amount_of_element, l);
             if(position==3) printf("Place self left overlapped amount is %d at layer %d\n",amount_of_element, l);
 #endif
-/*
-            if(get_size(&regions_and_data, position)>0) {
-#if DEBUG_SERIALIZATION
-               printf("free self old data for partition %ld \n", get_size(&regions_and_data, position)/sizeof(float));
-#endif
-               free(get_data(&regions_and_data, position));
-               set_size(&regions_and_data, position, 0);
-            }
-*/
             set_data(&regions_and_data, position, data);
             set_size(&regions_and_data, position, size);
          }

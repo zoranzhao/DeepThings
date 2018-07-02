@@ -37,6 +37,15 @@ bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_nu
 
 }
 
+bool need_reuse_data_from_gateway(bool* reuse_data_is_required){
+   uint32_t pos;
+   for(pos = 0; pos < 4; pos++){
+      if(reuse_data_is_required[pos] == true)
+         return true;
+   }
+   return false;
+}
+
 blob* adjacent_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num, bool *reuse_data_is_required){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
