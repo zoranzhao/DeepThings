@@ -89,15 +89,87 @@ void deepthings_merge_result_thread(void *arg){
 #endif
 }
 
-/*defined in gateway.h from darkiot
-void work_stealing_thread;
-*/
+
+#if DATA_REUSE
+/*static overlapped_tile_data overlapped_data_and_parameters[CLI_NUM][PARTITIONS_MAX][FUSED_LAYERS_MAX];*/
+static blob* overlapped_data_pool[CLI_NUM][PARTITIONS_MAX];
+
+void* recv_reuse_data_from_edge(void* srv_conn){
+   printf("collecting_reuse_data ... ... \n");
+   service_conn *conn = (service_conn *)srv_conn;
+   int32_t cli_id;
+   int32_t task_id;
+#if DEBUG_DEEP_GATEWAY
+   char ip_addr[ADDRSTRLEN];
+   int32_t processing_cli_id;
+   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   processing_cli_id = get_client_id(ip_addr);
+   if(processing_cli_id < 0)
+      printf("Client IP address unknown ... ...\n");
+#endif
+   blob* temp = recv_data(conn);
+   cli_id = get_blob_cli_id(temp);
+   task_id = get_blob_task_id(temp);
+#if DEBUG_DEEP_GATEWAY
+   printf("Overlapped data for client %d, task %d is collected from %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+#endif
+   overlapped_data_pool[cli_id][task_id] = temp;
+   return NULL;
+}
+
+void* send_reuse_data_to_edge(void* srv_conn){
+   printf("handing_out_reuse_data ... ... \n");
+   service_conn *conn = (service_conn *)srv_conn;
+
+   int32_t cli_id;
+   int32_t task_id;
+   blob* temp = recv_data(conn);
+   cli_id = get_blob_cli_id(temp);
+   task_id = get_blob_task_id(temp);
+   free_blob(temp);
+
+#if DEBUG_DEEP_GATEWAY
+   char ip_addr[ADDRSTRLEN];
+   int32_t processing_cli_id;
+   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   processing_cli_id = get_client_id(ip_addr);
+   if(processing_cli_id < 0)
+      printf("Client IP address unknown ... ...\n");
+   printf("Overlapped data for client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+#endif
+
+   temp = overlapped_data_pool[cli_id][task_id];
+   send_data(temp, conn);
+   free_blob(temp);
+
+   return NULL;
+}
+
+#endif
+
+void deepthings_work_stealing_thread(void *arg){
+#if DATA_REUSE
+   const char* request_types[]={"register_gateway", "cancel_gateway", "steal_gateway", "reuse_data", "request_reuse_data"};
+   void* (*handlers[])(void*) = {register_gateway, cancel_gateway, steal_gateway, recv_reuse_data_from_edge, send_reuse_data_to_edge};
+#else
+   const char* request_types[]={"register_gateway", "cancel_gateway", "steal_gateway"};
+   void* (*handlers[])(void*) = {register_gateway, cancel_gateway, steal_gateway};
+#endif
+
+   int wst_service = service_init(WORK_STEAL_PORT, TCP);
+#if DATA_REUSE
+   start_service(wst_service, TCP, request_types, 5, handlers);
+#else
+   start_service(wst_service, TCP, request_types, 3, handlers);
+#endif
+   close_service(wst_service);
+}
 
 
 void deepthings_gateway(){
    cnn_model* model = deepthings_gateway_init();
 
-   sys_thread_t t3 = sys_thread_new("work_stealing_thread", work_stealing_thread, NULL, 0, 0);
+   sys_thread_t t3 = sys_thread_new("deepthings_work_stealing_thread", deepthings_work_stealing_thread, model, 0, 0);
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("deepthings_merge_result_thread", deepthings_merge_result_thread, model, 0, 0);
    exec_barrier(START_CTRL, TCP);

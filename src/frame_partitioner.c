@@ -1,6 +1,9 @@
 #include "darkiot.h"
 #include "frame_partitioner.h"
-
+#if DATA_REUSE
+thread_safe_queue* shrinked_task_queue;
+thread_safe_queue* schedule_task_queue;
+#endif
 void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
    uint32_t task;
    network_parameters* net_para = model->net_para;
@@ -32,6 +35,27 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
 
    }
 #if DATA_REUSE
+   for(i = 0; i < model->ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
+         task = model->ftp_para_reuse->task_id[i][j];
+         if(model->ftp_para_reuse->schedule[task] == 0){
+            temp = new_empty_blob(model->ftp_para_reuse->schedule[task]);
+            annotate_blob(temp, get_this_client_id(), frame_num, task);
+            enqueue(schedule_task_queue, temp);
+         }
+      }
+   }
+   for(i = 0; i < model->ftp_para_reuse->partitions_h; i++){
+      for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
+         task = model->ftp_para_reuse->task_id[i][j];
+         if(model->ftp_para_reuse->schedule[task] == 1){
+            temp = new_empty_blob(model->ftp_para_reuse->schedule[task]);
+            annotate_blob(temp, get_this_client_id(), frame_num, task);
+            enqueue(schedule_task_queue, temp);
+         }
+      }
+   }
+
    for(i = 0; i < model->ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
          task = model->ftp_para_reuse->task_id[i][j];
@@ -76,6 +100,10 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
                                   dw1, dw2, dh1, dh2);
             ftp_para_reuse->shrinked_input_size[task] = 
                           sizeof(float)*(dw2-dw1+1)*(dh2-dh1+1)*net_para->input_maps[0].c;
+            temp = new_blob_and_copy_data((int32_t)task, ftp_para_reuse->shrinked_input_size[task], (uint8_t*)ftp_para_reuse->shrinked_input[task]);
+            annotate_blob(temp, get_this_client_id(), frame_num, task);
+            enqueue(shrinked_task_queue, temp);
+            free_blob(temp);
          }
       }
    }
