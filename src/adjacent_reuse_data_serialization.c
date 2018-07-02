@@ -37,7 +37,7 @@ bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_nu
 
 }
 
-blob* reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num, bool *reuse_data_is_required){
+blob* adjacent_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num, bool *reuse_data_is_required){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
    overlapped_tile_data regions_and_data;
@@ -49,7 +49,7 @@ blob* reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t fram
    float *reuse_data;
    uint32_t size = 0;
    uint32_t l;
-   reuse_data = (float*)malloc(ftp_para_reuse->reuse_data_size[task_id]);
+   reuse_data = (float*)malloc(ftp_para_reuse->adjacent_reuse_data_size[task_id]);
 
    for(position = 0; position < 4; position++) 
       adjacent_id[position]=-1;
@@ -96,7 +96,7 @@ blob* reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t fram
    return temp;
 }
 
-overlapped_tile_data** reuse_data_deserialization(cnn_model* model, uint32_t task_id, float* input, uint32_t frame_num, bool *reuse_data_is_required){
+overlapped_tile_data** adjacent_reuse_data_deserialization(cnn_model* model, uint32_t task_id, float* input, uint32_t frame_num, bool *reuse_data_is_required){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
 
@@ -164,7 +164,7 @@ overlapped_tile_data** reuse_data_deserialization(cnn_model* model, uint32_t tas
    return regions_and_data_ptr_array;
 }
 
-void place_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile_data** regions_and_data_ptr_array, bool *reuse_data_is_required){
+void place_adjacent_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile_data** regions_and_data_ptr_array, bool *reuse_data_is_required){
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    overlapped_tile_data regions_and_data;
    overlapped_tile_data regions_and_data_to_be_placed;

@@ -64,9 +64,11 @@ void local_ftp(int argc, char **argv){
    this_cli_id = 0;
    total_cli_num = 1;
    init_queues(total_cli_num);
+   shrinked_task_queue = new_queue(MAX_QUEUE_SIZE);
+   schedule_task_queue = new_queue(MAX_QUEUE_SIZE);
 
    cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(2, 2, 4, model->net_para);
+   model->ftp_para = preform_ftp(3, 3, 4, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
@@ -113,9 +115,9 @@ void local_ftp(int argc, char **argv){
              printf("Right %d\n", tmp[1]);
              printf("Up %d\n",    tmp[2]);
              printf("Left %d\n",  tmp[3]);
-             blob* reuse_blob = reuse_data_serialization(model, temp->id, frame_seq, tmp); 
-             overlapped_tile_data** temp_region_and_data = reuse_data_deserialization(model, temp->id, (float*)reuse_blob->data, frame_seq, tmp);
-             place_deserialized_data(model, temp->id, temp_region_and_data, tmp);
+             blob* reuse_blob = adjacent_reuse_data_serialization(model, temp->id, frame_seq, tmp); 
+             overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, temp->id, (float*)reuse_blob->data, frame_seq, tmp);
+             place_adjacent_deserialized_data(model, temp->id, temp_region_and_data, tmp);
              free(tmp);
              free_overlapped_tile_data_ptr_array(temp_region_and_data);
              free_blob(reuse_blob);
@@ -136,6 +138,8 @@ void local_ftp(int argc, char **argv){
          else 
 #endif
          set_model_input(model, (float*)temp->data);
+
+
          forward_partition(model, get_blob_task_id(temp));  
          result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
@@ -144,6 +148,16 @@ void local_ftp(int argc, char **argv){
          copy_blob_meta(result, temp);
          enqueue(results_pool[this_cli_id], result);
          //enqueue(result_queue, result); 
+
+
+#if DATA_REUSE
+         if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 0) {
+               blob* self_ir  = self_reuse_data_serialization(model, get_blob_task_id(temp), frame_seq);
+               overlapped_tile_data* temp_region_and_data = self_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)self_ir->data, frame_seq);
+               place_self_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data);
+         }
+#endif
+
          free_blob(result);
          free_blob(temp);
 
@@ -173,10 +187,10 @@ void local_ftp(int argc, char **argv){
 
 int main(int argc, char **argv){
    /*test_queue_remove(argc, argv);*/
-   test_wst(argc, argv);
+   /*test_wst(argc, argv);*/
 
 
-
+   local_ftp(argc, argv);
 
    return 0;
 }

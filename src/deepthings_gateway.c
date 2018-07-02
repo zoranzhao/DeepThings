@@ -4,6 +4,8 @@
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
+static cnn_model* gateway_model;
+
 
 cnn_model* deepthings_gateway_init(){
    init_gateway();
@@ -91,8 +93,7 @@ void deepthings_merge_result_thread(void *arg){
 
 
 #if DATA_REUSE
-/*static overlapped_tile_data overlapped_data_and_parameters[CLI_NUM][PARTITIONS_MAX][FUSED_LAYERS_MAX];*/
-static blob* overlapped_data_pool[CLI_NUM][PARTITIONS_MAX];
+static overlapped_tile_data* overlapped_data_pool[CLI_NUM][PARTITIONS_MAX];
 
 void* recv_reuse_data_from_edge(void* srv_conn){
    printf("collecting_reuse_data ... ... \n");
@@ -111,9 +112,11 @@ void* recv_reuse_data_from_edge(void* srv_conn){
    cli_id = get_blob_cli_id(temp);
    task_id = get_blob_task_id(temp);
 #if DEBUG_DEEP_GATEWAY
-   printf("Overlapped data for client %d, task %d is collected from %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+   printf("Overlapped data for client %d, task %d is collected from %d: %s, size is %d\n", cli_id, task_id, processing_cli_id, ip_addr, temp->size);
 #endif
-   overlapped_data_pool[cli_id][task_id] = temp;
+
+   overlapped_data_pool[cli_id][task_id] = self_reuse_data_deserialization(gateway_model, task_id, (float*)temp->data, get_blob_frame_seq(temp));
+
    return NULL;
 }
 
@@ -123,9 +126,11 @@ void* send_reuse_data_to_edge(void* srv_conn){
 
    int32_t cli_id;
    int32_t task_id;
+   uint32_t frame_num;
    blob* temp = recv_data(conn);
    cli_id = get_blob_cli_id(temp);
    task_id = get_blob_task_id(temp);
+   frame_num = get_blob_frame_seq(temp);
    free_blob(temp);
 
 #if DEBUG_DEEP_GATEWAY
@@ -138,7 +143,33 @@ void* send_reuse_data_to_edge(void* srv_conn){
    printf("Overlapped data for client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
 #endif
 
-   temp = overlapped_data_pool[cli_id][task_id];
+
+   uint32_t position;
+   int32_t adjacent_id[4];
+   for(position = 0; position < 4; position++){
+      adjacent_id[position]=-1;
+   }
+   ftp_parameters_reuse* ftp_para_reuse = gateway_model->ftp_para_reuse;
+   uint32_t j = task_id%(ftp_para_reuse->partitions_w);
+   uint32_t i = task_id/(ftp_para_reuse->partitions_w);
+   if((i+1)<(ftp_para_reuse->partitions_h)) adjacent_id[0] = ftp_para_reuse->task_id[i+1][j];
+   /*get the left overlapped data from tile on the right*/
+   if((j+1)<(ftp_para_reuse->partitions_w)) adjacent_id[1] = ftp_para_reuse->task_id[i][j+1];
+   /*get the bottom overlapped data from tile above*/
+   if(i>0) adjacent_id[2] = ftp_para_reuse->task_id[i-1][j];
+   /*get the right overlapped data from tile on the left*/
+   if(j>0) adjacent_id[3] = ftp_para_reuse->task_id[i][j-1];
+
+   for(position = 0; position < 4; position++){
+      if(adjacent_id[position]==-1) continue;
+      place_self_deserialized_data(gateway_model, adjacent_id[position], overlapped_data_pool[cli_id][adjacent_id[position]]);
+   }
+   bool tmp[4];
+   tmp[0] =true;
+   tmp[1] =true;
+   tmp[2] =true;
+   tmp[3] =true;
+   temp = adjacent_reuse_data_serialization(gateway_model, task_id, frame_num, tmp);
    send_data(temp, conn);
    free_blob(temp);
 
@@ -168,7 +199,7 @@ void deepthings_work_stealing_thread(void *arg){
 
 void deepthings_gateway(){
    cnn_model* model = deepthings_gateway_init();
-
+   gateway_model = model;
    sys_thread_t t3 = sys_thread_new("deepthings_work_stealing_thread", deepthings_work_stealing_thread, model, 0, 0);
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("deepthings_merge_result_thread", deepthings_merge_result_thread, model, 0, 0);

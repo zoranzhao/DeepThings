@@ -24,22 +24,18 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
    if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 1) return;
 
    service_conn* conn;
-   bool tmp[4];
-   tmp[0] =true;
-   tmp[1] =true;
-   tmp[2] =true;
-   tmp[3] =true;
-   
-   blob* temp = reuse_data_serialization(model, get_blob_cli_id(task_input_blob), get_blob_frame_seq(task_input_blob), tmp);
+
+   blob* temp  = self_reuse_data_serialization(model, get_blob_task_id(task_input_blob), get_blob_frame_seq(task_input_blob));
    conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
    send_request("reuse_data", 20, conn);
 #if DEBUG_DEEP_EDGE
-   printf("send reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
+   printf("send self reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
    copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
    free_blob(temp);
    close_service_connection(conn);
+
 }
 
 
@@ -54,23 +50,26 @@ void request_reuse_data(cnn_model* model, blob* task_input_blob){
    tmp[2] =true;
    tmp[3] =true;
    
-   char data[20]="empty";
-   blob* temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), 20, (uint8_t*)data);
-   copy_blob_meta(temp, task_input_blob);
+
 
    conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
    send_request("request_reuse_data", 20, conn);
+   char data[20]="empty";
+   blob* temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), 20, (uint8_t*)data);
+   copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
    free_blob(temp);
 #if DEBUG_DEEP_EDGE
    printf("Request reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
+
    temp = recv_data(conn);
    copy_blob_meta(temp, task_input_blob);
-   overlapped_tile_data** temp_region_and_data = reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), tmp);
-   place_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, tmp);
+   overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), tmp);
+   place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, tmp);
    free_blob(temp);
    close_service_connection(conn);
+
 }
 #endif
 

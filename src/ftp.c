@@ -230,7 +230,8 @@ void calculate_reuse_data_size(ftp_parameters_reuse* ftp_para_reuse, network_par
    /*get the right overlapped data from tile on the left*/
    if(j>0) adjacent_id[3] = ftp_para_reuse->task_id[i][j-1];
 
-   ftp_para_reuse->reuse_data_size[task_id]=0;
+   ftp_para_reuse->adjacent_reuse_data_size[task_id]=0;
+   ftp_para_reuse->self_reuse_data_size[task_id]=0;
 
    for(l = 0; l < ftp_para_reuse->fused_layers-1; l++){
       for(position = 0; position < 4; position++){
@@ -239,7 +240,17 @@ void calculate_reuse_data_size(ftp_parameters_reuse* ftp_para_reuse, network_par
          regions_and_data = ftp_para_reuse->output_reuse_regions[adjacent_id[position]][l];
          overlap_index = get_region(&regions_and_data, mirror_position);
          if((overlap_index.w>0)&&(overlap_index.h>0))
-            ftp_para_reuse->reuse_data_size[task_id] += sizeof(float)*overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+            ftp_para_reuse->adjacent_reuse_data_size[task_id] += sizeof(float)*overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
+      }
+   }
+
+   for(l = 0; l < ftp_para_reuse->fused_layers-1; l++){
+      for(position = 0; position < 4; position++){
+         if(adjacent_id[position]==-1) continue;
+         regions_and_data = ftp_para_reuse->output_reuse_regions[task_id][l];
+         overlap_index = get_region(&regions_and_data, position);
+         if((overlap_index.w>0)&&(overlap_index.h>0))
+            ftp_para_reuse->self_reuse_data_size[task_id] += sizeof(float)*overlap_index.w*overlap_index.h*net_para->output_maps[l].c;
       }
    }
 }
