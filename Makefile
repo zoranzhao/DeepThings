@@ -4,8 +4,8 @@ ARM_NEON=1
 DEBUG=0
 
 VPATH=./src
-DARKIOT=../DarkIoT
-DARKNET=../darknet-nnpack
+DARKIOT=./darkiot
+DARKNET=./darknet-nnpack
 OBJDIR=./obj/
 EXEC=deepthings
 DARKNETLIB=libdarknet.a
