@@ -6,7 +6,6 @@
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
 #include <string.h>
-
 #include "deepthings_edge.h"
 #include "deepthings_gateway.h"
 
@@ -16,10 +15,6 @@ make ARGS="2 wst gateway" test
 make ARGS="0 wst_s data_source" test
 make ARGS="1 wst non_data_source" test
 make ARGS="2 wst non_data_source" test
-
-void deepthings_stealer_edge();
-void deepthings_victim_edge();
-void deepthings_gateway();
 */
 
 
@@ -139,7 +134,6 @@ void local_ftp(int argc, char **argv){
 #endif
          set_model_input(model, (float*)temp->data);
 
-
          forward_partition(model, get_blob_task_id(temp));  
          result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
@@ -148,8 +142,6 @@ void local_ftp(int argc, char **argv){
          copy_blob_meta(result, temp);
          enqueue(results_pool[this_cli_id], result);
          //enqueue(result_queue, result); 
-
-
 #if DATA_REUSE
          if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 0) {
                blob* self_ir  = self_reuse_data_serialization(model, get_blob_task_id(temp), frame_seq);
@@ -157,13 +149,9 @@ void local_ftp(int argc, char **argv){
                place_self_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data);
          }
 #endif
-
          free_blob(result);
          free_blob(temp);
-
       }
-
-
 
       enqueue(ready_pool, new_empty_blob(this_cli_id));
       temp = (dequeue_and_merge(model));
@@ -173,25 +161,13 @@ void local_ftp(int argc, char **argv){
       free(fused_output);
       draw_object_boxes(model, frame_seq);
       free_image_holder(model, img);
-
    }
 }
-/*
-   for(int frame_seq = 0; frame_seq < 4; frame_seq++){
-      image_holder img = load_image_as_model_input(model, frame_seq);
-      forward_all(model, 0);   
-      draw_object_boxes(model, frame_seq);
-      free_image_holder(model, img);
-   }
-*/
+
 
 int main(int argc, char **argv){
-   /*test_queue_remove(argc, argv);*/
-   /*test_wst(argc, argv);*/
-
-
-   local_ftp(argc, argv);
-
+   /*local_ftp(argc, argv);*/
+   test_wst(argc, argv);
    return 0;
 }
 
