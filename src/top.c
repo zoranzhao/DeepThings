@@ -59,8 +59,10 @@ void local_ftp(int argc, char **argv){
    this_cli_id = 0;
    total_cli_num = 1;
    init_queues(total_cli_num);
+#if DATA_REUSE
    shrinked_task_queue = new_queue(MAX_QUEUE_SIZE);
    schedule_task_queue = new_queue(MAX_QUEUE_SIZE);
+#endif
 
    cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
    model->ftp_para = preform_ftp(3, 3, 4, model->net_para);
