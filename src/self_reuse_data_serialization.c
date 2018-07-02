@@ -145,6 +145,7 @@ void place_self_deserialized_data(cnn_model* model, uint32_t task_id, overlapped
             if(position==2) printf("Place self above overlapped amount is %d at layer %d\n",amount_of_element, l);
             if(position==3) printf("Place self left overlapped amount is %d at layer %d\n",amount_of_element, l);
 #endif
+/*
             if(get_size(&regions_and_data, position)>0) {
 #if DEBUG_SERIALIZATION
                printf("free self old data for partition %ld \n", get_size(&regions_and_data, position)/sizeof(float));
@@ -152,6 +153,7 @@ void place_self_deserialized_data(cnn_model* model, uint32_t task_id, overlapped
                free(get_data(&regions_and_data, position));
                set_size(&regions_and_data, position, 0);
             }
+*/
             set_data(&regions_and_data, position, data);
             set_size(&regions_and_data, position, size);
          }
