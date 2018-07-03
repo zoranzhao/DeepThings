@@ -111,7 +111,6 @@ void partition_frame_and_perform_inference_thread(void *arg){
       while(1){
          temp = try_dequeue(task_queue);
          if(temp == NULL) break;
-         printf("Task id is %d\n", temp->id);
          bool data_ready = false;
 #if DATA_REUSE
          data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
@@ -125,6 +124,11 @@ void partition_frame_and_perform_inference_thread(void *arg){
 
 
             reuse_data_is_required = check_missing_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
+#if DEBUG_DEEP_EDGE
+            printf("====================Processing task, id is %d====================\n", temp->id);
+            printf("Request data from gateway, is there anything missing locally? ...\n");
+            print_reuse_data_is_required(reuse_data_is_required);
+#endif
             request_reuse_data(model, temp, reuse_data_is_required);
             free(reuse_data_is_required);
          }
@@ -180,6 +184,12 @@ void steal_partition_and_perform_inference_thread(void *arg){
       bool* reuse_data_is_required = (bool*) reuse_info_blob->data;
       request_reuse_data(model, temp, reuse_data_is_required);
       if(!need_reuse_data_from_gateway(reuse_data_is_required)) data_ready = false; 
+#if DEBUG_DEEP_EDGE
+      printf("====================Processing stolen task, id is %d====================\n", temp->id);
+      printf("Request data from gateway, is the reuse data ready? ...\n");
+      print_reuse_data_is_required(reuse_data_is_required);
+#endif
+
       free_blob(reuse_info_blob);
 #endif
       close_service_connection(conn);
