@@ -113,8 +113,8 @@ void partition_frame_and_perform_inference_thread(void *arg){
          if(temp == NULL) break;
          bool data_ready = false;
 #if DEBUG_DEEP_EDGE
-            printf("====================Processing task, id is %d====================\n", temp->id);
-#endif
+         printf("====================Processing task, id is %d====================\n", temp->id);
+#endif/*DEBUG_DEEP_EDGE*/
 #if DATA_REUSE
          data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
@@ -130,11 +130,16 @@ void partition_frame_and_perform_inference_thread(void *arg){
 #if DEBUG_DEEP_EDGE
             printf("Request data from gateway, is there anything missing locally? ...\n");
             print_reuse_data_is_required(reuse_data_is_required);
-#endif
+#endif/*DEBUG_DEEP_EDGE*/
             request_reuse_data(model, temp, reuse_data_is_required);
             free(reuse_data_is_required);
          }
-#endif
+#if DEBUG_DEEP_EDGE
+         if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && (!data_ready))
+            printf("The reuse data is not ready yet!\n", temp->id);
+#endif/*DEBUG_DEEP_EDGE*/
+
+#endif/*DATA_REUSE*/
          process_task(model, temp, data_ready);
          free_blob(temp);
       }
