@@ -82,10 +82,17 @@ void print_reuse_data_is_required(bool* reuse_data_is_required){
          |
          0
    */
+   printf("Down %d\n", reuse_data_is_required[0]);
+   printf("Right---> %d\n", reuse_data_is_required[1]);
+   printf("Up %d\n", reuse_data_is_required[2]);
+   printf("<---Left %d\n", reuse_data_is_required[3]);
+
+/*
    if(reuse_data_is_required[0]) printf("Down\n");
    if(reuse_data_is_required[1]) printf("Right--->\n");
    if(reuse_data_is_required[2]) printf("Up\n");
    if(reuse_data_is_required[3]) printf("<---Left\n");
+*/
 }
 
 bool need_reuse_data_from_gateway(bool* reuse_data_is_required){

@@ -40,8 +40,8 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
 
 void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
    /*if task doesn't require any reuse_data*/
-   if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;/*Task without anmy dependency*/
-   if(need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
+   if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;/*Task without any dependency*/
+   //if(!need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
 
    service_conn* conn;
    conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);

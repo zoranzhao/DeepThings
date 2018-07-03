@@ -170,6 +170,7 @@ void* send_reuse_data_to_edge(void* srv_conn){
 
 #if DEBUG_DEEP_GATEWAY
    printf("Overlapped data for client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+   print_reuse_data_is_required(reuse_data_is_required);
 #endif
    uint32_t position;
    int32_t adjacent_id[4];
