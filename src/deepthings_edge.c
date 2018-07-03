@@ -136,7 +136,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
          }
 #if DEBUG_DEEP_EDGE
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && (!data_ready))
-            printf("The reuse data is not ready yet!\n", temp->id);
+            printf("The reuse data is not ready yet!\n");
 #endif/*DEBUG_DEEP_EDGE*/
 
 #endif/*DATA_REUSE*/
