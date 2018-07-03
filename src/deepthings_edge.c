@@ -41,7 +41,7 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
 void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
    /*if task doesn't require any reuse_data*/
    if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;/*Task without any dependency*/
-   //if(!need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
+   if(!need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
 
    service_conn* conn;
    conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
@@ -112,6 +112,9 @@ void partition_frame_and_perform_inference_thread(void *arg){
          temp = try_dequeue(task_queue);
          if(temp == NULL) break;
          bool data_ready = false;
+#if DEBUG_DEEP_EDGE
+            printf("====================Processing task, id is %d====================\n", temp->id);
+#endif
 #if DATA_REUSE
          data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
@@ -125,7 +128,6 @@ void partition_frame_and_perform_inference_thread(void *arg){
 
             reuse_data_is_required = check_missing_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
 #if DEBUG_DEEP_EDGE
-            printf("====================Processing task, id is %d====================\n", temp->id);
             printf("Request data from gateway, is there anything missing locally? ...\n");
             print_reuse_data_is_required(reuse_data_is_required);
 #endif
