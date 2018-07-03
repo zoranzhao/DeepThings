@@ -37,40 +37,8 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
 
 }
 
-void request_reuse_data_in_data_source(cnn_model* model, blob* task_input_blob){
-   /*if task doesn't require any reuse_data*/
-   if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;
 
-   service_conn* conn;
-   conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
-   send_request("request_reuse_data", 20, conn);
-   char data[20]="empty";
-   blob* temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), 20, (uint8_t*)data);
-   copy_blob_meta(temp, task_input_blob);
-   send_data(temp, conn);
-   free_blob(temp);
-#if DEBUG_DEEP_EDGE
-   printf("Request reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
-#endif
-
-   bool* reuse_data_is_required = check_local_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
-   temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), sizeof(bool)*4, (uint8_t*)reuse_data_is_required);
-   copy_blob_meta(temp, task_input_blob);
-   send_data(temp, conn);
-   free_blob(temp);
-
-   if(need_reuse_data_from_gateway(reuse_data_is_required)){
-      temp = recv_data(conn);
-      copy_blob_meta(temp, task_input_blob);
-      overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), reuse_data_is_required);
-      place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, reuse_data_is_required);
-      free_blob(temp);
-   }
-   close_service_connection(conn);
-   free(reuse_data_is_required);
-}
-
-void request_reuse_data_in_stealer(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
+void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
    /*if task doesn't require any reuse_data*/
    if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;
 
@@ -128,6 +96,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
 #endif
    blob* temp;
    uint32_t frame_num;
+   bool* reuse_data_is_required;   
    for(frame_num = 0; frame_num < FRAME_NUM; frame_num ++){
       /*Wait for i/o device input*/
       /*recv_img()*/
@@ -143,9 +112,6 @@ void partition_frame_and_perform_inference_thread(void *arg){
          if(temp == NULL) break;
          printf("Task id is %d\n", temp->id);
 #if DATA_REUSE
-/*
-&& is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))
-*/
          if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) {
             blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
@@ -154,7 +120,9 @@ void partition_frame_and_perform_inference_thread(void *arg){
             free_blob(temp);
             temp = shrinked_temp;
          }
-         request_reuse_data_in_data_source(model, temp);
+         reuse_data_is_required = check_local_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
+         request_reuse_data(model, temp, reuse_data_is_required);
+         free(reuse_data_is_required);
 #endif
          process_task(model, temp);
          free_blob(temp);
@@ -204,7 +172,7 @@ void steal_partition_and_perform_inference_thread(void *arg){
 #if DATA_REUSE
       blob* reuse_info_blob = recv_data(conn);
       bool* reuse_data_is_required = (bool*) reuse_info_blob->data;
-      request_reuse_data_in_stealer(model, temp, reuse_data_is_required);
+      request_reuse_data(model, temp, reuse_data_is_required);
       free_blob(reuse_info_blob);
 #endif
       close_service_connection(conn);
@@ -222,6 +190,8 @@ void steal_partition_and_perform_inference_thread(void *arg){
 void send_result_thread;
 */
 
+
+/*Function handling steal reqeust*/
 #if DATA_REUSE
 void* steal_client_reuse_aware(void* srv_conn){
    printf("steal_client_reuse_aware ... ... \n");
@@ -245,8 +215,7 @@ void* steal_client_reuse_aware(void* srv_conn){
       reuse_data_is_required[position] = false;
    }
 
-   if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) {
-
+   if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(edge_model->ftp_para_reuse, get_blob_task_id(temp))) {
       uint32_t position;
       int32_t adjacent_id[4];
       for(position = 0; position < 4; position++){
@@ -285,10 +254,6 @@ void* steal_client_reuse_aware(void* srv_conn){
    free(reuse_data_is_required);
    send_data(temp, conn);
    free_blob(temp);
-
-
-
-
 
    return NULL;
 }

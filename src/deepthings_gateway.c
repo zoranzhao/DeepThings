@@ -143,13 +143,14 @@ void* send_reuse_data_to_edge(void* srv_conn){
    processing_cli_id = get_client_id(ip_addr);
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
-   printf("Overlapped data for client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
 #endif
 
    temp = recv_data(conn);
    bool* reuse_data_is_required = (bool*)(temp->data);
    if(need_reuse_data_from_gateway(reuse_data_is_required)){
-
+#if DEBUG_DEEP_GATEWAY
+      printf("Overlapped data for client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+#endif
       uint32_t position;
       int32_t adjacent_id[4];
       for(position = 0; position < 4; position++){
@@ -176,6 +177,11 @@ void* send_reuse_data_to_edge(void* srv_conn){
       temp = adjacent_reuse_data_serialization(gateway_model, task_id, frame_num, reuse_data_is_required);
       send_data(temp, conn);
    }
+#if DEBUG_DEEP_GATEWAY
+   else{
+      printf("The overlapped data is not needed client %d, task %d is required by %d: %s is \n", cli_id, task_id, processing_cli_id, ip_addr);
+   }
+#endif
 
    free_blob(temp);
 
