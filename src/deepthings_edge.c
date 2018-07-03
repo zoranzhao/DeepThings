@@ -40,7 +40,8 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
 
 void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
    /*if task doesn't require any reuse_data*/
-   if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;
+   if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;/*Task without anmy dependency*/
+   if(need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
 
    service_conn* conn;
    conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
@@ -59,13 +60,13 @@ void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_dat
    send_data(temp, conn);
    free_blob(temp);
 
-   if(need_reuse_data_from_gateway(reuse_data_is_required)){
-      temp = recv_data(conn);
-      copy_blob_meta(temp, task_input_blob);
-      overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), reuse_data_is_required);
-      place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, reuse_data_is_required);
-      free_blob(temp);
-   }
+
+   temp = recv_data(conn);
+   copy_blob_meta(temp, task_input_blob);
+   overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), reuse_data_is_required);
+   place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, reuse_data_is_required);
+   free_blob(temp);
+
    close_service_connection(conn);
 }
 #endif
@@ -257,17 +258,34 @@ void* steal_client_reuse_aware(void* srv_conn){
 
    return NULL;
 }
+
+void* update_coverage(void* srv_conn){
+   printf("update_coverage ... ... \n");
+   service_conn *conn = (service_conn *)srv_conn;
+   blob* temp = recv_data(conn);
+#if DEBUG_DEEP_EDGE
+   printf("set coverage for task %d\n", get_blob_task_id(temp));
+#endif
+   set_coverage(edge_model->ftp_para_reuse, get_blob_task_id(temp));
+   free_blob(temp);
+   return NULL;
+}
 #endif
 
 void deepthings_serve_stealing_thread(void *arg){
-   const char* request_types[]={"steal_client"};
 #if DATA_REUSE
-   void* (*handlers[])(void*) = {steal_client_reuse_aware};
+   const char* request_types[]={"steal_client", "update_coverage"};
+   void* (*handlers[])(void*) = {steal_client_reuse_aware, update_coverage};
 #else
+   const char* request_types[]={"steal_client"};
    void* (*handlers[])(void*) = {steal_client};
 #endif
    int wst_service = service_init(WORK_STEAL_PORT, TCP);
+#if DATA_REUSE
+   start_service(wst_service, TCP, request_types, 2, handlers);
+#else
    start_service(wst_service, TCP, request_types, 1, handlers);
+#endif
    close_service(wst_service);
 }
 
