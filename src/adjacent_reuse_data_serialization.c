@@ -74,6 +74,20 @@ bool* check_missing_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_
 
 }
 
+void print_reuse_data_is_required(bool* reuse_data_is_required){
+   /*position encoding
+         2
+         |
+    3<-self->1
+         |
+         0
+   */
+   if(reuse_data_is_required[0]) printf("Down\n");
+   if(reuse_data_is_required[1]) printf("Right--->\n");
+   if(reuse_data_is_required[2]) printf("Up\n");
+   if(reuse_data_is_required[3]) printf("<---Left\n");
+}
+
 bool need_reuse_data_from_gateway(bool* reuse_data_is_required){
    uint32_t pos;
    for(pos = 0; pos < 4; pos++){
