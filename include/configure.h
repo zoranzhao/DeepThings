@@ -16,8 +16,8 @@
 #define DEBUG_DEEP_EDGE 1
 
 #define FUSED_LAYERS 16
-#define PARTITIONS_W 3
-#define PARTITIONS_H 3
+#define PARTITIONS_W 5
+#define PARTITIONS_H 5
 
 
 
