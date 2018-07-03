@@ -5,6 +5,7 @@
 #include "inference_engine_helper.h"
 #if DATA_REUSE
 bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_num);
+bool* check_missing_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_num);
 blob* adjacent_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num, bool *reuse_data_is_required);
 overlapped_tile_data** adjacent_reuse_data_deserialization(cnn_model* model, uint32_t task_id, float* input, uint32_t frame_num, bool *reuse_data_is_required);
 void place_adjacent_deserialized_data(cnn_model* model, uint32_t task_id, overlapped_tile_data** regions_and_data_ptr_array, bool *reuse_data_is_required);

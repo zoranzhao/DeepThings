@@ -71,10 +71,10 @@ void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_dat
 }
 #endif
 
-static inline void process_task(cnn_model* model, blob* temp){
+static inline void process_task(cnn_model* model, blob* temp, bool is_reuse){
    blob* result;
    set_model_input(model, (float*)temp->data);
-   forward_partition(model, get_blob_task_id(temp));  
+   forward_partition(model, get_blob_task_id(temp), is_reuse);  
    result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
                                       (uint8_t*)(get_model_output(model, model->ftp_para->fused_layers-1))
@@ -112,20 +112,24 @@ void partition_frame_and_perform_inference_thread(void *arg){
          temp = try_dequeue(task_queue);
          if(temp == NULL) break;
          printf("Task id is %d\n", temp->id);
+         bool data_ready = false;
 #if DATA_REUSE
-         if(model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) {
+         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
+         if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
             blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
                        (uint8_t*)(model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));
             copy_blob_meta(shrinked_temp, temp);
             free_blob(temp);
             temp = shrinked_temp;
+
+
+            reuse_data_is_required = check_missing_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
+            request_reuse_data(model, temp, reuse_data_is_required);
+            free(reuse_data_is_required);
          }
-         reuse_data_is_required = check_local_coverage(model, get_blob_task_id(temp), get_blob_frame_seq(temp));
-         request_reuse_data(model, temp, reuse_data_is_required);
-         free(reuse_data_is_required);
 #endif
-         process_task(model, temp);
+         process_task(model, temp, data_ready);
          free_blob(temp);
       }
 
@@ -170,14 +174,16 @@ void steal_partition_and_perform_inference_thread(void *arg){
          sys_sleep(100);
          continue;
       }
+      bool data_ready = true;
 #if DATA_REUSE
       blob* reuse_info_blob = recv_data(conn);
       bool* reuse_data_is_required = (bool*) reuse_info_blob->data;
       request_reuse_data(model, temp, reuse_data_is_required);
+      if(!need_reuse_data_from_gateway(reuse_data_is_required)) data_ready = false; 
       free_blob(reuse_info_blob);
 #endif
       close_service_connection(conn);
-      process_task(model, temp);
+      process_task(model, temp, data_ready);
       free_blob(temp);
    }
 #ifdef NNPACK
@@ -267,6 +273,7 @@ void* update_coverage(void* srv_conn){
    printf("set coverage for task %d\n", get_blob_task_id(temp));
 #endif
    set_coverage(edge_model->ftp_para_reuse, get_blob_task_id(temp));
+   set_missing(edge_model->ftp_para_reuse, get_blob_task_id(temp));
    free_blob(temp);
    return NULL;
 }

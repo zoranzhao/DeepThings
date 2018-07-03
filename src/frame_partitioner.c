@@ -31,6 +31,8 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
 
    }
 #if DATA_REUSE
+
+
    for(i = 0; i < model->ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
          task = model->ftp_para_reuse->task_id[i][j];

@@ -37,6 +37,43 @@ bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_nu
 
 }
 
+bool* check_missing_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_num){
+   ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
+
+   uint32_t j = task_id%ftp_para_reuse->partitions_w;
+   uint32_t i = task_id/ftp_para_reuse->partitions_w;
+   uint32_t pos;
+   bool* reuse_data_is_required = (bool*) malloc(4*sizeof(bool));
+   /*position encoding
+         2
+         |
+   3 <- self -> 1
+         |
+         0
+   */
+   for(pos = 0; pos < 4; pos++){
+      reuse_data_is_required[pos] = true;
+   }
+   /*check the up overlapped data from tile below*/
+   if((i+1)<(ftp_para_reuse->partitions_h)){
+      if(get_missing(ftp_para_reuse, ftp_para_reuse->task_id[i+1][j])==0) reuse_data_is_required[0] = false;
+   }else{reuse_data_is_required[0] = false;}
+   /*check the left overlapped data from tile on the right*/
+   if((j+1)<(ftp_para_reuse->partitions_w)) {
+      if(get_missing(ftp_para_reuse, ftp_para_reuse->task_id[i][j+1])==0) reuse_data_is_required[1] = false;
+   }else{reuse_data_is_required[1] = false;}
+   /*check the bottom overlapped data from tile above*/
+   if(i>0){
+      if(get_missing(ftp_para_reuse, ftp_para_reuse->task_id[i-1][j])==0) reuse_data_is_required[2] = false;
+   }else{reuse_data_is_required[2] = false;}
+   /*check the right overlapped data from tile on the left*/
+   if(j>0){
+      if(get_missing(ftp_para_reuse, ftp_para_reuse->task_id[i][j-1])==0) reuse_data_is_required[3] = false;
+   }else{reuse_data_is_required[3] = false;}
+   return reuse_data_is_required;
+
+}
+
 bool need_reuse_data_from_gateway(bool* reuse_data_is_required){
    uint32_t pos;
    for(pos = 0; pos < 4; pos++){

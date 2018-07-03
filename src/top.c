@@ -131,7 +131,9 @@ void local_ftp(int argc, char **argv){
 #endif
          set_model_input(model, (float*)temp->data);
 
-         forward_partition(model, get_blob_task_id(temp));  
+         forward_partition(model, get_blob_task_id(temp), 
+                         model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp))
+                         );  
          result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
                                       (uint8_t*)(get_model_output(model, model->ftp_para->fused_layers-1))

@@ -55,7 +55,7 @@ typedef struct cnn_model_wrapper{
 
 
 cnn_model* load_cnn_model(char* cfg, char* weights);
-void forward_partition(cnn_model* model, uint32_t task_id);
+void forward_partition(cnn_model* model, uint32_t task_id, bool is_reuse);
 image_holder load_image_as_model_input(cnn_model* model, uint32_t id);
 void free_image_holder(cnn_model* model, image_holder sized);
 void forward_all(cnn_model* model, uint32_t from);

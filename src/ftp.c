@@ -354,6 +354,14 @@ void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    ftp_para_reuse->coverage[task_id]=1;
 }
 
+void set_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+   ftp_para_reuse->missing[task_id]=1;
+}
+
+uint32_t get_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+   return ftp_para_reuse->missing[task_id];
+}
+
 uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    return ftp_para_reuse->coverage[task_id];
 }
@@ -365,9 +373,11 @@ void clean_coverage(ftp_parameters_reuse* ftp_para_reuse){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];
          ftp_para_reuse->coverage[task]=0;
+         ftp_para_reuse->missing[task]=0;
       }
    }
 }
+
 
 bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
    uint32_t i = task_id/(ftp_para_reuse->partitions_w);
