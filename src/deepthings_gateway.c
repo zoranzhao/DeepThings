@@ -136,7 +136,6 @@ void* recv_reuse_data_from_edge(void* srv_conn){
       free_self_overlapped_tile_data(gateway_model,  overlapped_data_pool[cli_id][task_id]);
    overlapped_data_pool[cli_id][task_id] = self_reuse_data_deserialization(gateway_model, task_id, (float*)temp->data, get_blob_frame_seq(temp));
 
-
    if(processing_cli_id != cli_id) notify_coverage(gateway_model, temp, cli_id);
    free_blob(temp);
 
