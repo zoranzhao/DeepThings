@@ -20,7 +20,6 @@
 #define PARTITIONS_H 5
 
 
-
 #include <stdint.h>
 
 
