@@ -241,26 +241,12 @@ void* steal_client_reuse_aware(void* srv_conn){
 
    if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(edge_model->ftp_para_reuse, get_blob_task_id(temp))) {
       uint32_t position;
-      int32_t adjacent_id[4];
-      for(position = 0; position < 4; position++){
-         adjacent_id[position]=-1;
-      }
-      ftp_parameters_reuse* ftp_para_reuse = edge_model->ftp_para_reuse;
-      uint32_t j = task_id%(ftp_para_reuse->partitions_w);
-      uint32_t i = task_id/(ftp_para_reuse->partitions_w);
-      if((i+1)<(ftp_para_reuse->partitions_h)) adjacent_id[0] = ftp_para_reuse->task_id[i+1][j];
-      /*get the left overlapped data from tile on the right*/
-      if((j+1)<(ftp_para_reuse->partitions_w)) adjacent_id[1] = ftp_para_reuse->task_id[i][j+1];
-      /*get the bottom overlapped data from tile above*/
-      if(i>0) adjacent_id[2] = ftp_para_reuse->task_id[i-1][j];
-      /*get the right overlapped data from tile on the left*/
-      if(j>0) adjacent_id[3] = ftp_para_reuse->task_id[i][j-1];
-
+      int32_t* adjacent_id = get_adjacent_task_id_list(edge_model, task_id);
       for(position = 0; position < 4; position++){
          if(adjacent_id[position]==-1) continue;
          reuse_data_is_required[position] = true;
       }
-
+      free(adjacent_id);
       blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (edge_model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
                        (uint8_t*)(edge_model->ftp_para_reuse->shrinked_input[get_blob_task_id(temp)]));

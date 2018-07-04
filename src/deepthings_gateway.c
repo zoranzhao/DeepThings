@@ -173,20 +173,7 @@ void* send_reuse_data_to_edge(void* srv_conn){
    print_reuse_data_is_required(reuse_data_is_required);
 #endif
    uint32_t position;
-   int32_t adjacent_id[4];
-   for(position = 0; position < 4; position++){
-      adjacent_id[position]=-1;
-   }
-   ftp_parameters_reuse* ftp_para_reuse = gateway_model->ftp_para_reuse;
-   uint32_t j = task_id%(ftp_para_reuse->partitions_w);
-   uint32_t i = task_id/(ftp_para_reuse->partitions_w);
-   if((i+1)<(ftp_para_reuse->partitions_h)) adjacent_id[0] = ftp_para_reuse->task_id[i+1][j];
-   /*get the left overlapped data from tile on the right*/
-   if((j+1)<(ftp_para_reuse->partitions_w)) adjacent_id[1] = ftp_para_reuse->task_id[i][j+1];
-   /*get the bottom overlapped data from tile above*/
-   if(i>0) adjacent_id[2] = ftp_para_reuse->task_id[i-1][j];
-   /*get the right overlapped data from tile on the left*/
-   if(j>0) adjacent_id[3] = ftp_para_reuse->task_id[i][j-1];
+   int32_t* adjacent_id = get_adjacent_task_id_list(gateway_model, task_id);
 
    for(position = 0; position < 4; position++){
       if(adjacent_id[position]==-1) continue;
@@ -197,7 +184,7 @@ void* send_reuse_data_to_edge(void* srv_conn){
          place_self_deserialized_data(gateway_model, adjacent_id[position], overlapped_data_pool[cli_id][adjacent_id[position]]);
       }
    }
-
+   free(adjacent_id);
    temp = adjacent_reuse_data_serialization(gateway_model, task_id, frame_num, reuse_data_is_required);
    free_blob(reuse_info_blob);
    send_data(temp, conn);
