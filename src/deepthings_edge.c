@@ -34,9 +34,7 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
    send_data(temp, conn);
    free_blob(temp);
    close_service_connection(conn);
-
 }
-
 
 void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
    /*if task doesn't require any reuse_data*/
