@@ -18,6 +18,11 @@ make ARGS="2 wst non_data_source" test
 make ARGS="<Cli_ID> <wst/wst_s> <data_source/non_data_source>" test  
 */
 
+/*
+"models/yolo.cfg"
+"models/yolo.weights"
+*/
+
 int main(int argc, char **argv){
 
    printf("total_cli_num %d\n", atoi(argv[1]));
