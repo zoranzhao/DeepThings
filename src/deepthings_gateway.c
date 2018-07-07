@@ -39,6 +39,7 @@ void* deepthings_result_gateway(void* srv_conn){
    printf("result_gateway ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
    int32_t cli_id;
+   int32_t frame_seq;
 #if DEBUG_FLAG
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
@@ -61,6 +62,7 @@ void* deepthings_result_gateway(void* srv_conn){
 #endif
    blob* temp = recv_data(conn);
    cli_id = get_blob_cli_id(temp);
+   frame_seq = get_blob_frame_seq(temp);
 #if DEBUG_FLAG
    printf("Result from %d: %s is for client %d, total number recved is %d\n", processing_cli_id, ip_addr, cli_id, results_counter[cli_id]);
 #endif
@@ -73,7 +75,6 @@ void* deepthings_result_gateway(void* srv_conn){
       printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
 #endif
 #if DEBUG_TIMING
-      int32_t frame_seq = get_blob_frame_seq(temp);
       printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
       now = sys_now_in_sec();
       /*Total latency*/
