@@ -5,7 +5,9 @@
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
 static cnn_model* gateway_model;
-
+#if DEBUG_TIMING
+static double start_time;
+#endif
 
 cnn_model* deepthings_gateway_init(){
    init_gateway();
@@ -83,10 +85,38 @@ void deepthings_merge_result_thread(void *arg){
    blob* temp;
    int32_t cli_id;
    int32_t frame_seq;
+#if DEBUG_TIMING
+   double acc_time[CLI_NUM];
+   double acc_frames[CLI_NUM];
+   double total_time;
+   uint32_t total_frames;
+   double now;
+   uint32_t i;
+   for(i = 0; i < CLI_NUM; i ++){
+      acc_time[i] = 0;
+      acc_frames[i] = 0;
+   }
+#endif
    while(1){
       temp = dequeue_and_merge(model);
       cli_id = get_blob_cli_id(temp);
       frame_seq = get_blob_frame_seq(temp);
+#if DEBUG_TIMING
+      printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
+      now = sys_now_in_sec();
+      /*Total latency*/
+      acc_time[cli_id] = now - start_time;
+      acc_frames[cli_id] = frame_seq + 1;
+      printf("Avg latency for Client %d is: %f\n", cli_id, acc_time[cli_id]/acc_frames[cli_id]);
+
+      total_time = 0;
+      total_frames = 0;
+      for(i = 0; i < CLI_NUM; i ++){
+         total_time = total_time + acc_time[i];
+         total_frames = total_frames + acc_frames[i];
+      }
+      printf("Avg latency for all clients %f\n", total_time/total_frames);
+#endif
 #if DEBUG_FLAG
       printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
 #endif
@@ -221,7 +251,9 @@ void deepthings_gateway(){
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("deepthings_merge_result_thread", deepthings_merge_result_thread, model, 0, 0);
    exec_barrier(START_CTRL, TCP);
-
+#if DEBUG_TIMING
+   start_time = sys_now_in_sec();
+#endif
    sys_thread_join(t1);
    sys_thread_join(t2);
    sys_thread_join(t3);

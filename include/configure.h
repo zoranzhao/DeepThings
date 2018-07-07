@@ -19,6 +19,7 @@
 #define PARTITIONS_W 5
 #define PARTITIONS_H 5
 
+#define DEBUG_TIMING 1
 
 #include <stdint.h>
 
