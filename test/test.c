@@ -28,7 +28,6 @@ void local_ftp(int argc, char **argv){
       }
    }
 */
-
    for(int frame_seq = 0; frame_seq < 4; frame_seq++){
       image_holder img = load_image_as_model_input(model, frame_seq);
       partition_and_enqueue(model, frame_seq);
