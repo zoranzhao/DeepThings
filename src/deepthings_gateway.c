@@ -44,6 +44,18 @@ void* deepthings_result_gateway(void* srv_conn){
    int32_t processing_cli_id;
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
    processing_cli_id = get_client_id(ip_addr);
+#if DEBUG_TIMING
+   double acc_time[CLI_NUM];
+   double acc_frames[CLI_NUM];
+   double total_time;
+   uint32_t total_frames;
+   double now;
+   uint32_t i;
+   for(i = 0; i < CLI_NUM; i ++){
+      acc_time[i] = 0;
+      acc_frames[i] = 0;
+   }
+#endif
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
 #endif
@@ -59,6 +71,23 @@ void* deepthings_result_gateway(void* srv_conn){
       temp = new_empty_blob(cli_id);
 #if DEBUG_FLAG
       printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
+#endif
+#if DEBUG_TIMING
+      int32_t frame_seq = get_blob_frame_seq(temp);
+      printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
+      now = sys_now_in_sec();
+      /*Total latency*/
+      acc_time[cli_id] = now - start_time;
+      acc_frames[cli_id] = frame_seq + 1;
+      printf("Avg latency for Client %d is: %f\n", cli_id, acc_time[cli_id]/acc_frames[cli_id]);
+
+      total_time = 0;
+      total_frames = 0;
+      for(i = 0; i < CLI_NUM; i ++){
+         total_time = total_time + acc_time[i];
+         total_frames = total_frames + acc_frames[i];
+      }
+      printf("Avg latency for all clients %f\n", total_time/total_frames);
 #endif
       enqueue(ready_pool, temp);
       free_blob(temp);
@@ -85,38 +114,10 @@ void deepthings_merge_result_thread(void *arg){
    blob* temp;
    int32_t cli_id;
    int32_t frame_seq;
-#if DEBUG_TIMING
-   double acc_time[CLI_NUM];
-   double acc_frames[CLI_NUM];
-   double total_time;
-   uint32_t total_frames;
-   double now;
-   uint32_t i;
-   for(i = 0; i < CLI_NUM; i ++){
-      acc_time[i] = 0;
-      acc_frames[i] = 0;
-   }
-#endif
    while(1){
       temp = dequeue_and_merge(model);
       cli_id = get_blob_cli_id(temp);
       frame_seq = get_blob_frame_seq(temp);
-#if DEBUG_TIMING
-      printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
-      now = sys_now_in_sec();
-      /*Total latency*/
-      acc_time[cli_id] = now - start_time;
-      acc_frames[cli_id] = frame_seq + 1;
-      printf("Avg latency for Client %d is: %f\n", cli_id, acc_time[cli_id]/acc_frames[cli_id]);
-
-      total_time = 0;
-      total_frames = 0;
-      for(i = 0; i < CLI_NUM; i ++){
-         total_time = total_time + acc_time[i];
-         total_frames = total_frames + acc_frames[i];
-      }
-      printf("Avg latency for all clients %f\n", total_time/total_frames);
-#endif
 #if DEBUG_FLAG
       printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
 #endif
