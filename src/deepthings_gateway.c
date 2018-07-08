@@ -7,6 +7,8 @@
 static cnn_model* gateway_model;
 #if DEBUG_TIMING
 static double start_time;
+static double acc_time[CLI_NUM];
+static uint32_t acc_frames[CLI_NUM];
 #endif
 
 cnn_model* deepthings_gateway_init(){
@@ -46,16 +48,10 @@ void* deepthings_result_gateway(void* srv_conn){
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
    processing_cli_id = get_client_id(ip_addr);
 #if DEBUG_TIMING
-   double acc_time[CLI_NUM];
-   uint32_t acc_frames[CLI_NUM];
    double total_time;
    uint32_t total_frames;
    double now;
    uint32_t i;
-   for(i = 0; i < CLI_NUM; i ++){
-      acc_time[i] = 0;
-      acc_frames[i] = 0;
-   }
 #endif
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
