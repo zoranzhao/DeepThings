@@ -47,7 +47,7 @@ void* deepthings_result_gateway(void* srv_conn){
    processing_cli_id = get_client_id(ip_addr);
 #if DEBUG_TIMING
    double acc_time[CLI_NUM];
-   double acc_frames[CLI_NUM];
+   uint32_t acc_frames[CLI_NUM];
    double total_time;
    uint32_t total_frames;
    double now;
@@ -85,6 +85,8 @@ void* deepthings_result_gateway(void* srv_conn){
       total_time = 0;
       total_frames = 0;
       for(i = 0; i < CLI_NUM; i ++){
+         if(acc_frames[i] > 0)
+             printf("Avg latency for Client %d is: %f\n", i, acc_time[i]/acc_frames[i]);
          total_time = total_time + acc_time[i];
          total_frames = total_frames + acc_frames[i];
       }
