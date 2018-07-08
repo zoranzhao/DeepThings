@@ -111,7 +111,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
          if(temp == NULL) break;
          bool data_ready = false;
 #if DEBUG_DEEP_EDGE
-         printf("====================Processing task, id is %d====================\n", temp->id);
+         printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
 #endif/*DEBUG_DEEP_EDGE*/
 #if DATA_REUSE
          data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
@@ -190,7 +190,7 @@ void steal_partition_and_perform_inference_thread(void *arg){
       request_reuse_data(model, temp, reuse_data_is_required);
       if(!need_reuse_data_from_gateway(reuse_data_is_required)) data_ready = false; 
 #if DEBUG_DEEP_EDGE
-      printf("====================Processing stolen task, id is %d====================\n", temp->id);
+      printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
       printf("Request data from gateway, is the reuse data ready? ...\n");
       print_reuse_data_is_required(reuse_data_is_required);
 #endif
