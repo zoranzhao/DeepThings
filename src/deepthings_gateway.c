@@ -92,6 +92,9 @@ void* deepthings_result_gateway(void* srv_conn){
       }
       printf("Avg latency for all clients %f\n", total_time/total_frames);
 #endif
+#if DEBUG_COMMU_SIZE
+      printf("Communication size at gateway is: %f\n", ((double)commu_size)/(1024.0*1024.0));
+#endif
       enqueue(ready_pool, temp);
       free_blob(temp);
       results_counter[cli_id] = 0;
