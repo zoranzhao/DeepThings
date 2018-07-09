@@ -4,18 +4,18 @@ ARM_NEON=1
 DEBUG=0
 
 VPATH=./src
-DARKIOT=../DarkIoT
+DISTRIOT=./distriot
 DARKNET=./darknet-nnpack
 OBJDIR=./obj/
 EXEC=deepthings
 DARKNETLIB=libdarknet.a
-DARKIOTLIB=libdarkiot.a
+DISTRIOTLIB=libdistriot.a
 
 CC=gcc
 LDFLAGS= -lm -pthread
 CFLAGS=-Wall -fPIC
-COMMON=-I$(DARKIOT)/include/ -I$(DARKIOT)/src/ -I$(DARKNET)/include/ -I$(DARKNET)/src/ -Iinclude/ -Isrc/ 
-LDLIB=-L$(DARKIOT) -l:$(DARKIOTLIB) -L$(DARKNET) -l:$(DARKNETLIB)
+COMMON=-I$(DISTRIOT)/include/ -I$(DISTRIOT)/src/ -I$(DARKNET)/include/ -I$(DARKNET)/src/ -Iinclude/ -Isrc/ 
+LDLIB=-L$(DISTRIOT) -l:$(DISTRIOTLIB) -L$(DARKNET) -l:$(DARKNETLIB)
 
 ifeq ($(OPENMP), 1) 
 CFLAGS+= -fopenmp
@@ -45,14 +45,14 @@ DEPS = $(wildcard */*.h) Makefile
 
 all: obj $(EXEC)
 
-$(EXEC): $(EXECOBJ) $(DARKNETLIB) $(DARKIOTLIB)
+$(EXEC): $(EXECOBJ) $(DARKNETLIB) $(DISTRIOTLIB)
 	$(CC) $(COMMON) $(CFLAGS) $(EXECOBJ) -o $@  $(LDLIB) $(LDFLAGS)
 
 $(DARKNETLIB):
 	$(MAKE) -C $(DARKNET)
 
-$(DARKIOTLIB):
-	$(MAKE) -C $(DARKIOT)
+$(DISTRIOTLIB):
+	$(MAKE) -C $(DISTRIOT)
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
