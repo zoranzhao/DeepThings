@@ -1,0 +1,3 @@
+[submodule "darknet-nnpack"]
+	path = darknet-nnpack
+	url = https://github.com/zoranzhao/darknet-nnpack
