@@ -135,9 +135,6 @@ void partition_frame_and_perform_inference_thread(void *arg){
             request_reuse_data(model, temp, reuse_data_is_required);
             free(reuse_data_is_required);
          }
-#if DEBUG_COMMU_SIZE
-         printf("Communication size at edge is: %f\n", ((double)commu_size)/(1024.0*1024.0*FRAME_NUM));
-#endif
 #if DEBUG_DEEP_EDGE
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && (!data_ready))
             printf("The reuse data is not ready yet!\n");
@@ -146,6 +143,9 @@ void partition_frame_and_perform_inference_thread(void *arg){
 #endif/*DATA_REUSE*/
          process_task(model, temp, data_ready);
          free_blob(temp);
+#if DEBUG_COMMU_SIZE
+         printf("======Communication size at edge is: %f======\n", ((double)commu_size)/(1024.0*1024.0*FRAME_NUM));
+#endif
       }
 
       /*Unregister and prepare for next image*/
