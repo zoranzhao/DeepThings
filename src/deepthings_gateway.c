@@ -10,6 +10,9 @@ static double start_time;
 static double acc_time[CLI_NUM];
 static uint32_t acc_frames[CLI_NUM];
 #endif
+#if DEBUG_COMMU_SIZE
+static double commu_size;
+#endif
 
 cnn_model* deepthings_gateway_init(){
    init_gateway();
@@ -59,6 +62,9 @@ void* deepthings_result_gateway(void* srv_conn){
    blob* temp = recv_data(conn);
    cli_id = get_blob_cli_id(temp);
    frame_seq = get_blob_frame_seq(temp);
+#if DEBUG_COMMU_SIZE
+   commu_size = commu_size + temp->size;
+#endif
 #if DEBUG_FLAG
    printf("Result from %d: %s is for client %d, total number recved is %d\n", processing_cli_id, ip_addr, cli_id, results_counter[cli_id]);
 #endif
@@ -76,8 +82,6 @@ void* deepthings_result_gateway(void* srv_conn){
       /*Total latency*/
       acc_time[cli_id] = now - start_time;
       acc_frames[cli_id] = frame_seq + 1;
-      printf("Avg latency for Client %d is: %f\n", cli_id, acc_time[cli_id]/acc_frames[cli_id]);
-
       total_time = 0;
       total_frames = 0;
       for(i = 0; i < CLI_NUM; i ++){
@@ -159,6 +163,10 @@ void* recv_reuse_data_from_edge(void* srv_conn){
    blob* temp = recv_data(conn);
    cli_id = get_blob_cli_id(temp);
    task_id = get_blob_task_id(temp);
+#if DEBUG_COMMU_SIZE
+   commu_size = commu_size + temp->size;
+#endif
+
 #if DEBUG_DEEP_GATEWAY
    printf("Overlapped data for client %d, task %d is collected from %d: %s, size is %d\n", cli_id, task_id, processing_cli_id, ip_addr, temp->size);
 #endif
@@ -217,7 +225,9 @@ void* send_reuse_data_to_edge(void* srv_conn){
    temp = adjacent_reuse_data_serialization(gateway_model, task_id, frame_num, reuse_data_is_required);
    free_blob(reuse_info_blob);
    send_data(temp, conn);
-
+#if DEBUG_COMMU_SIZE
+   commu_size = commu_size + temp->size;
+#endif
    free_blob(temp);
 
    return NULL;

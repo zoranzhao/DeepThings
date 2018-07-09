@@ -20,6 +20,8 @@
 #define PARTITIONS_H 5
 
 #define DEBUG_TIMING 1
+#define DEBUG_COMMU_SIZE 1
+
 
 #include <stdint.h>
 

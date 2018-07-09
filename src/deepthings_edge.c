@@ -5,6 +5,9 @@
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
 static cnn_model* edge_model;
+#if DEBUG_COMMU_SIZE
+static double commu_size;
+#endif
 
 cnn_model* deepthings_edge_init(){
    init_client();
@@ -253,6 +256,9 @@ void* steal_client_reuse_aware(void* srv_conn){
       temp = shrinked_temp;
    }
    send_data(temp, conn);
+#if DEBUG_COMMU_SIZE
+   commu_size = commu_size + temp->size;
+#endif
    free_blob(temp);
 
    /*Send bool variables for different positions*/
