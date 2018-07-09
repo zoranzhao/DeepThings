@@ -5,7 +5,7 @@ DEBUG=0
 
 VPATH=./src
 DARKIOT=../DarkIoT
-DARKNET=../darknet-nnpack
+DARKNET=./darknet-nnpack
 OBJDIR=./obj/
 EXEC=deepthings
 DARKNETLIB=libdarknet.a
