@@ -176,7 +176,7 @@ static inline uint32_t look_up_handler_table(char* name, const char* handler_nam
    return handler_id;
 }
 
-void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*), uint32_t times){
+void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*, void*), void* arg, uint32_t times){
    socklen_t clilen;
 #if IPV4_TASK
    struct sockaddr_in cli_addr;
@@ -213,7 +213,7 @@ void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler
       /*Recv meta control data and pick up the correct handler*/
 
       /*Calling handler on the connection session*/
-      (handlers[handler_id])(conn);
+      (handlers[handler_id])(conn, arg);
       /*Calling handler on the connection session*/
 
       /*Close connection*/
@@ -224,7 +224,7 @@ void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler
    }
 }
 
-void start_service(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*)){
+void start_service(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*, void*), void* arg){
    socklen_t clilen;
 #if IPV4_TASK
    struct sockaddr_in cli_addr;
@@ -260,7 +260,7 @@ void start_service(int sockfd, ctrl_proto proto, const char* handler_name[], uin
       /*Recv meta control data and pick up the correct handler*/
 
       /*Calling handler on the connection session*/
-      (handlers[handler_id])(conn);
+      (handlers[handler_id])(conn, arg);
       /*Calling handler on the connection session*/
 
       /*Close connection*/

@@ -11,7 +11,7 @@ LDFLAGS= -lm -pthread
 CFLAGS=-Wall -fPIC
 DARKIOT=..
 COMMON=-I$(DARKIOT)/include/ -I$(DARKIOT)/src/  -Iinclude/ -Isrc/ 
-LDLIB=-L$(DARKIOT) -l:libdarkiot.a
+LDLIB=-L$(DARKIOT) -l:libdistriot.a
 
 ifeq ($(OPENMP), 1) 
 CFLAGS+= -fopenmp

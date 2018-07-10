@@ -4,7 +4,6 @@
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
-static cnn_model* edge_model;
 #if DEBUG_COMMU_SIZE
 static double commu_size;
 #endif
@@ -221,9 +220,11 @@ void send_result_thread;
 
 /*Function handling steal reqeust*/
 #if DATA_REUSE
-void* steal_client_reuse_aware(void* srv_conn){
+void* steal_client_reuse_aware(void* srv_conn, void* model){
    printf("steal_client_reuse_aware ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
+   cnn_model* edge_model = (cnn_model*)model;
+
    blob* temp = try_dequeue(task_queue);
    if(temp == NULL){
       char data[20]="empty";
@@ -275,9 +276,11 @@ void* steal_client_reuse_aware(void* srv_conn){
    return NULL;
 }
 
-void* update_coverage(void* srv_conn){
+void* update_coverage(void* srv_conn, void* model){
    printf("update_coverage ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
+   cnn_model* edge_model = (cnn_model*)model;
+
    blob* temp = recv_data(conn);
 #if DEBUG_DEEP_EDGE
    printf("set coverage for task %d\n", get_blob_task_id(temp));
@@ -292,16 +295,16 @@ void* update_coverage(void* srv_conn){
 void deepthings_serve_stealing_thread(void *arg){
 #if DATA_REUSE
    const char* request_types[]={"steal_client", "update_coverage"};
-   void* (*handlers[])(void*) = {steal_client_reuse_aware, update_coverage};
+   void* (*handlers[])(void*, void*) = {steal_client_reuse_aware, update_coverage};
 #else
    const char* request_types[]={"steal_client"};
-   void* (*handlers[])(void*) = {steal_client};
+   void* (*handlers[])(void*, void*) = {steal_client};
 #endif
    int wst_service = service_init(WORK_STEAL_PORT, TCP);
 #if DATA_REUSE
-   start_service(wst_service, TCP, request_types, 2, handlers);
+   start_service(wst_service, TCP, request_types, 2, handlers, arg);
 #else
-   start_service(wst_service, TCP, request_types, 1, handlers);
+   start_service(wst_service, TCP, request_types, 1, handlers, arg);
 #endif
    close_service(wst_service);
 }
@@ -325,7 +328,6 @@ void deepthings_victim_edge(){
 
 
    cnn_model* model = deepthings_edge_init();
-   edge_model = model;
    exec_barrier(START_CTRL, TCP);
 
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);

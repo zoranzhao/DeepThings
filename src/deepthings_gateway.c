@@ -4,7 +4,6 @@
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
 #include "reuse_data_serialization.h"
-static cnn_model* gateway_model;
 #if DEBUG_TIMING
 static double start_time;
 static double acc_time[CLI_NUM];
@@ -40,7 +39,7 @@ void notify_coverage(cnn_model* model, blob* task_input_blob, uint32_t cli_id){
 #endif
 
 
-void* deepthings_result_gateway(void* srv_conn){
+void* deepthings_result_gateway(void* srv_conn, void* model){
    printf("result_gateway ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
    int32_t cli_id;
@@ -105,9 +104,9 @@ void* deepthings_result_gateway(void* srv_conn){
 
 void deepthings_collect_result_thread(void *arg){
    const char* request_types[]={"result_gateway"};
-   void* (*handlers[])(void*) = {deepthings_result_gateway};
+   void* (*handlers[])(void*, void*) = {deepthings_result_gateway};
    int result_service = service_init(RESULT_COLLECT_PORT, TCP);
-   start_service(result_service, TCP, request_types, 1, handlers);
+   start_service(result_service, TCP, request_types, 1, handlers, arg);
    close_service(result_service);
 }
 
@@ -150,9 +149,11 @@ static overlapped_tile_data* overlapped_data_pool[CLI_NUM][PARTITIONS_MAX];
 /*
 static bool partition_coverage[CLI_NUM][PARTITIONS_MAX];
 */
-void* recv_reuse_data_from_edge(void* srv_conn){
+void* recv_reuse_data_from_edge(void* srv_conn, void* model){
    printf("collecting_reuse_data ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
+   cnn_model* gateway_model = (cnn_model*)model;
+
    int32_t cli_id;
    int32_t task_id;
 
@@ -183,9 +184,10 @@ void* recv_reuse_data_from_edge(void* srv_conn){
    return NULL;
 }
 
-void* send_reuse_data_to_edge(void* srv_conn){
+void* send_reuse_data_to_edge(void* srv_conn, void* model){
    printf("handing_out_reuse_data ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
+   cnn_model* gateway_model = (cnn_model*)model;
 
    int32_t cli_id;
    int32_t task_id;
@@ -241,17 +243,17 @@ void* send_reuse_data_to_edge(void* srv_conn){
 void deepthings_work_stealing_thread(void *arg){
 #if DATA_REUSE
    const char* request_types[]={"register_gateway", "cancel_gateway", "steal_gateway", "reuse_data", "request_reuse_data"};
-   void* (*handlers[])(void*) = {register_gateway, cancel_gateway, steal_gateway, recv_reuse_data_from_edge, send_reuse_data_to_edge};
+   void* (*handlers[])(void*, void*) = {register_gateway, cancel_gateway, steal_gateway, recv_reuse_data_from_edge, send_reuse_data_to_edge};
 #else
    const char* request_types[]={"register_gateway", "cancel_gateway", "steal_gateway"};
-   void* (*handlers[])(void*) = {register_gateway, cancel_gateway, steal_gateway};
+   void* (*handlers[])(void*, void*) = {register_gateway, cancel_gateway, steal_gateway};
 #endif
 
    int wst_service = service_init(WORK_STEAL_PORT, TCP);
 #if DATA_REUSE
-   start_service(wst_service, TCP, request_types, 5, handlers);
+   start_service(wst_service, TCP, request_types, 5, handlers, arg);
 #else
-   start_service(wst_service, TCP, request_types, 3, handlers);
+   start_service(wst_service, TCP, request_types, 3, handlers, arg);
 #endif
    close_service(wst_service);
 }
@@ -259,7 +261,6 @@ void deepthings_work_stealing_thread(void *arg){
 
 void deepthings_gateway(){
    cnn_model* model = deepthings_gateway_init();
-   gateway_model = model;
    sys_thread_t t3 = sys_thread_new("deepthings_work_stealing_thread", deepthings_work_stealing_thread, model, 0, 0);
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("deepthings_merge_result_thread", deepthings_merge_result_thread, model, 0, 0);

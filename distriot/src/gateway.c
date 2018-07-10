@@ -14,7 +14,7 @@ void init_gateway(){
    registration_list = new_queue(MAX_QUEUE_SIZE); 
 }
 
-void* result_gateway(void* srv_conn){
+void* result_gateway(void* srv_conn, void* arg){
    printf("result_gateway ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
    int32_t cli_id;
@@ -46,9 +46,9 @@ void* result_gateway(void* srv_conn){
 
 void collect_result_thread(void *arg){
    const char* request_types[]={"result_gateway"};
-   void* (*handlers[])(void*) = {result_gateway};
+   void* (*handlers[])(void*,void*) = {result_gateway};
    int result_service = service_init(RESULT_COLLECT_PORT, TCP);
-   start_service(result_service, TCP, request_types, 1, handlers);
+   start_service(result_service, TCP, request_types, 1, handlers, arg);
    close_service(result_service);
 }
 
@@ -66,8 +66,11 @@ void merge_result_thread(void *arg){
    }
 }
 
-void* register_gateway(void* srv_conn){
+void* register_gateway(void* srv_conn, void *arg){
    printf("register_gateway ... ... \n");
+#if DEBUG_FLAG
+   printf("The arg is %s\n", (char*)arg);
+#endif
    service_conn *conn = (service_conn *)srv_conn;
    char ip_addr[ADDRSTRLEN];
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
@@ -91,8 +94,11 @@ void* register_gateway(void* srv_conn){
    return NULL;
 }
 
-void* cancel_gateway(void* srv_conn){
+void* cancel_gateway(void* srv_conn, void *arg){
    printf("cancel_gateway ... ... \n");
+#if DEBUG_FLAG
+   printf("The arg is %s\n", (char*)arg);
+#endif
    service_conn *conn = (service_conn *)srv_conn;
    char ip_addr[ADDRSTRLEN];
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
@@ -101,7 +107,7 @@ void* cancel_gateway(void* srv_conn){
    return NULL;
 }
 
-void* steal_gateway(void* srv_conn){
+void* steal_gateway(void* srv_conn, void *arg){
    service_conn *conn = (service_conn *)srv_conn;
    blob* temp = try_dequeue(registration_list);
    if(temp == NULL){
@@ -117,9 +123,9 @@ void* steal_gateway(void* srv_conn){
 
 void work_stealing_thread(void *arg){
    const char* request_types[]={"register_gateway", "cancel_gateway", "steal_gateway"};
-   void* (*handlers[])(void*) = {register_gateway, cancel_gateway, steal_gateway};
+   void* (*handlers[])(void*,void*) = {register_gateway, cancel_gateway, steal_gateway};
    int wst_service = service_init(WORK_STEAL_PORT, TCP);
-   start_service(wst_service, TCP, request_types, 3, handlers);
+   start_service(wst_service, TCP, request_types, 3, handlers, arg);
    close_service(wst_service);
 }
 

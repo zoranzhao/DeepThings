@@ -104,7 +104,7 @@ void send_result_thread(void *arg){
    }
 }
 
-void* steal_client(void* srv_conn){
+void* steal_client(void* srv_conn, void* arg){
    printf("steal_client ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
    blob* temp = try_dequeue(task_queue);
@@ -122,9 +122,9 @@ void* steal_client(void* srv_conn){
 
 void serve_stealing_thread(void *arg){
    const char* request_types[]={"steal_client"};
-   void* (*handlers[])(void*) = {steal_client};
+   void* (*handlers[])(void*, void*) = {steal_client};
    int wst_service = service_init(WORK_STEAL_PORT, TCP);
-   start_service(wst_service, TCP, request_types, 1, handlers);
+   start_service(wst_service, TCP, request_types, 1, handlers, arg);
    close_service(wst_service);
 }
 

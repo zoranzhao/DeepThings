@@ -10,6 +10,6 @@ void send_result_thread(void *arg);
 void serve_stealing_thread(void *arg);
 void register_client();
 void cancel_client();
-void* steal_client(void* srv_conn);
+void* steal_client(void* srv_conn, void *arg);
 
 #endif

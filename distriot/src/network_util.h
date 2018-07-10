@@ -44,8 +44,8 @@ void send_request(void* meta, uint32_t meta_size, service_conn* conn);
 
 /*Networking API on service server side*/
 int service_init(int portno, ctrl_proto proto);
-void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*), uint32_t times);
-void start_service(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*));
+void start_service_for_n_times(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*, void*), void* arg, uint32_t times);
+void start_service(int sockfd, ctrl_proto proto, const char* handler_name[], uint32_t handler_num, void* (*handlers[])(void*, void*), void* arg);
 void close_service(int sockfd);
 
 /*Data exchanging API on both sides*/

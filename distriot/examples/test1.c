@@ -37,7 +37,7 @@ void producer(void *arg){
    free_blob(b5);
 }
 
-void* serve_steal(void* conn){
+void* serve_steal(void* conn, void* arg){
    printf("serve_steal ... ... \n");
    blob* temp = recv_data((service_conn *)conn);
    send_data(temp, conn);
@@ -46,7 +46,7 @@ void* serve_steal(void* conn){
    return NULL;
 }
 
-void* serve_result(void* conn){
+void* serve_result(void* conn, void* arg){
    printf("serve_result ... ... \n");
    blob* temp = recv_data((service_conn *)conn);
    send_data(temp, conn);
@@ -55,7 +55,7 @@ void* serve_result(void* conn){
    return NULL;
 }
 
-void* serve_sync(void* conn){
+void* serve_sync(void* conn, void* arg){
    printf("serve_sync ... ... \n");
    blob* temp = recv_data((service_conn *)conn);
    send_data(temp, conn);
@@ -66,22 +66,22 @@ void* serve_sync(void* conn){
 
 void server_thread(void *arg){
    const char* request_types[]={"steal", "result", "sync"};
-   void* (*handlers[])(void*) = {serve_steal, serve_result, serve_sync};
+   void* (*handlers[])(void*, void*) = {serve_steal, serve_result, serve_sync};
 
    int mapreduce_service = service_init(8080, TCP);
    printf("Service number is %d\n", mapreduce_service);
 
-   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, 1);
+   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, NULL, 1);
    printf("Service 1 is returned \n");
-   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, 1);
+   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, NULL, 1);
    printf("Service 2 is returned \n");
-   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, 1);
+   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, NULL, 1);
    printf("Service 3 is returned \n");
 
 /*
    start_service(mapreduce_service, TCP, request_types, 3, handlers);
 */   
-   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, 3);
+   start_service_for_n_times(mapreduce_service, TCP, request_types, 3, handlers, NULL, 3);
    close_service(mapreduce_service);
 }
 
@@ -195,9 +195,10 @@ void test_edge_ctrl(){
 void test_gateway(){
 
    init_gateway();
-   sys_thread_t t3 = sys_thread_new("work_stealing_thread", work_stealing_thread, NULL, 0, 0);
-   sys_thread_t t1 = sys_thread_new("collect_result_thread", collect_result_thread, NULL, 0, 0);
-   sys_thread_t t2 = sys_thread_new("merge_result_thread", merge_result_thread, NULL, 0, 0);
+   char str[40]="Abracadabra, blablaboom";
+   sys_thread_t t3 = sys_thread_new("work_stealing_thread", work_stealing_thread, str, 0, 0);
+   sys_thread_t t1 = sys_thread_new("collect_result_thread", collect_result_thread, str, 0, 0);
+   sys_thread_t t2 = sys_thread_new("merge_result_thread", merge_result_thread, str, 0, 0);
    exec_barrier(START_CTRL, TCP);
 
    sys_thread_join(t1);
