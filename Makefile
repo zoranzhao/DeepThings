@@ -63,7 +63,12 @@ obj:
 test:
 	./deepthings ${ARGS}
 
-.PHONY: clean
+.PHONY: clean clean_all
+
+clean_all:
+	make -C $(DISTRIOT) clean
+	make -C $(DARKNET) clean
+	rm -rf $(EXEC) $(EXECOBJ) *.log $(OBJDIR) *.png 
 
 clean:
 	rm -rf $(EXEC) $(EXECOBJ) *.log $(OBJDIR) *.png 
