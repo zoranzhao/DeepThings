@@ -70,7 +70,7 @@ void* deepthings_result_gateway(void* srv_conn, void* model){
    enqueue(results_pool[cli_id], temp);
    free_blob(temp);
    results_counter[cli_id]++;
-   if(results_counter[cli_id] == PARTITIONS_H*PARTITIONS_W){
+   if(results_counter[cli_id] == ((cnn_model*)model)->ftp_para->partitions){
       temp = new_empty_blob(cli_id);
 #if DEBUG_FLAG
       printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
