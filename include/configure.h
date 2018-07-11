@@ -9,12 +9,14 @@
 #define THREAD_NUM 1
 #define DATA_REUSE 1
 
+/*Debugging information for different components*/
 #define DEBUG_INFERENCE 0
 #define DEBUG_FTP 0
 #define DEBUG_SERIALIZATION 0
 #define DEBUG_DEEP_GATEWAY 0
 #define DEBUG_DEEP_EDGE 0
 
+/*Print timing and communication size information*/
 #define DEBUG_TIMING 1
 #define DEBUG_COMMU_SIZE 1
 
