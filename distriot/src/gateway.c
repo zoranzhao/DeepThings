@@ -68,9 +68,6 @@ void merge_result_thread(void *arg){
 
 void* register_gateway(void* srv_conn, void *arg){
    printf("register_gateway ... ... \n");
-#if DEBUG_FLAG
-   printf("The arg is %s\n", (char*)arg);
-#endif
    service_conn *conn = (service_conn *)srv_conn;
    char ip_addr[ADDRSTRLEN];
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
@@ -96,9 +93,6 @@ void* register_gateway(void* srv_conn, void *arg){
 
 void* cancel_gateway(void* srv_conn, void *arg){
    printf("cancel_gateway ... ... \n");
-#if DEBUG_FLAG
-   printf("The arg is %s\n", (char*)arg);
-#endif
    service_conn *conn = (service_conn *)srv_conn;
    char ip_addr[ADDRSTRLEN];
    inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
