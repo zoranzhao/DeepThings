@@ -8,11 +8,11 @@
 static double commu_size;
 #endif
 
-cnn_model* deepthings_edge_init(){
+cnn_model* deepthings_edge_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
    init_client();
    cnn_model* model;
-   model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(PARTITIONS_H, PARTITIONS_W, FUSED_LAYERS, model->net_para);
+   model = load_cnn_model(network, weights);
+   model->ftp_para = preform_ftp(N, M, fused_layers, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
@@ -310,10 +310,10 @@ void deepthings_serve_stealing_thread(void *arg){
 }
 
 
-void deepthings_stealer_edge(){
+void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
 
 
-   cnn_model* model = deepthings_edge_init();
+   cnn_model* model = deepthings_edge_init(N, M, fused_layers, network, weights);
    exec_barrier(START_CTRL, TCP);
 
    sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, model, 0, 0);
@@ -324,10 +324,10 @@ void deepthings_stealer_edge(){
 
 }
 
-void deepthings_victim_edge(){
+void deepthings_victim_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
 
 
-   cnn_model* model = deepthings_edge_init();
+   cnn_model* model = deepthings_edge_init(N, M, fused_layers, network, weights);
    exec_barrier(START_CTRL, TCP);
 
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);

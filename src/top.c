@@ -19,8 +19,7 @@ make ARGS="<Cli_ID> <wst/wst_s> <data_source/non_data_source>" test
 */
 
 /*
-"models/yolo.cfg"
-"models/yolo.weights"
+"models/yolo.cfg", "models/yolo.weights"
 */
 
 int main(int argc, char **argv){
@@ -30,7 +29,14 @@ int main(int argc, char **argv){
 
    this_cli_id = atoi(argv[1]);
    total_cli_num = atoi(argv[1]);
-      
+
+   uint32_t partitions_h = 5;
+   uint32_t partitions_w = 5;
+   uint32_t fused_layers = 16;
+
+   char network_file[30] = "models/yolo.cfg";
+   char weight_file[30] = "models/yolo.weights";
+
    if(0 == strcmp(argv[2], "start")){  
       printf("start\n");
       exec_start_gateway(START_CTRL, TCP);
@@ -38,25 +44,25 @@ int main(int argc, char **argv){
       printf("Work stealing\n");
       if(0 == strcmp(argv[3], "non_data_source")){
          printf("non_data_source\n");
-         deepthings_stealer_edge();
+         deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }else if(0 == strcmp(argv[3], "data_source")){
          printf("data_source\n");
-         deepthings_victim_edge();
+         deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }else if(0 == strcmp(argv[3], "gateway")){
          printf("gateway\n");
-         deepthings_gateway();
+         deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }
    }else if(0 == strcmp(argv[2], "wst_s")){
       printf("Work stealing with scheduling\n");
       if(0 == strcmp(argv[3], "non_data_source")){
          printf("non_data_source\n");
-         deepthings_stealer_edge();
+         deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }else if(0 == strcmp(argv[3], "data_source")){
          printf("data_source\n");
-         deepthings_victim_edge();
+         deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }else if(0 == strcmp(argv[3], "gateway")){
          printf("gateway\n");
-         deepthings_gateway();
+         deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
       }
    }
    return 0;

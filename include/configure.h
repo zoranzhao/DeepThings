@@ -15,10 +15,6 @@
 #define DEBUG_DEEP_GATEWAY 0
 #define DEBUG_DEEP_EDGE 0
 
-#define FUSED_LAYERS 16
-#define PARTITIONS_W 5
-#define PARTITIONS_H 5
-
 #define DEBUG_TIMING 1
 #define DEBUG_COMMU_SIZE 1
 

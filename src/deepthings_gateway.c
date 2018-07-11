@@ -13,10 +13,10 @@ static uint32_t acc_frames[CLI_NUM];
 static double commu_size;
 #endif
 
-cnn_model* deepthings_gateway_init(){
+cnn_model* deepthings_gateway_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
    init_gateway();
-   cnn_model* model = load_cnn_model((char*)"models/yolo.cfg", (char*)"models/yolo.weights");
-   model->ftp_para = preform_ftp(PARTITIONS_H, PARTITIONS_W, FUSED_LAYERS, model->net_para);
+   cnn_model* model = load_cnn_model(network, weights);
+   model->ftp_para = preform_ftp(N, M, fused_layers, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
@@ -259,8 +259,8 @@ void deepthings_work_stealing_thread(void *arg){
 }
 
 
-void deepthings_gateway(){
-   cnn_model* model = deepthings_gateway_init();
+void deepthings_gateway(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
+   cnn_model* model = deepthings_gateway_init(N, M, fused_layers, network, weights);
    sys_thread_t t3 = sys_thread_new("deepthings_work_stealing_thread", deepthings_work_stealing_thread, model, 0, 0);
    sys_thread_t t1 = sys_thread_new("deepthings_collect_result_thread", deepthings_collect_result_thread, model, 0, 0);
    sys_thread_t t2 = sys_thread_new("deepthings_merge_result_thread", deepthings_merge_result_thread, model, 0, 0);

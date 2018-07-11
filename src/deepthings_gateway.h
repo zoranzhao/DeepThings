@@ -2,11 +2,5 @@
 #define DEEPTHINGS_GATEWAY_H
 #include "darkiot.h"
 #include "configure.h"
-/*
-void init_gateway();
-void collect_result_thread(void *arg);
-void merge_result_thread(void *arg);
-void work_stealing_thread(void *arg);
-*/
-void deepthings_gateway();
+void deepthings_gateway(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights);
 #endif
