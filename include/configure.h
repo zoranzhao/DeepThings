@@ -8,6 +8,7 @@
 #define PARTITIONS_MAX 36
 #define THREAD_NUM 1
 #define DATA_REUSE 1
+#define TOTAL_FRAMES 4 
 
 /*Debugging information for different components*/
 #define DEBUG_INFERENCE 0

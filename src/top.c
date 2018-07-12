@@ -10,12 +10,10 @@
 #include "deepthings_gateway.h"
 
 /*
-make ARGS="2 start" test
-make ARGS="2 wst gateway" test
-make ARGS="0 wst_s data_source" test
-make ARGS="1 wst non_data_source" test
-make ARGS="2 wst non_data_source" test
-make ARGS="<Cli_ID> <wst/wst_s> <data_source/non_data_source>" test  
+./deepthings start 
+./deepthings gateway 6
+./deepthings data_src 0
+./deepthings non_data_src 1
 */
 
 /*
@@ -24,12 +22,6 @@ make ARGS="<Cli_ID> <wst/wst_s> <data_source/non_data_source>" test
 
 int main(int argc, char **argv){
 
-   printf("total_cli_num %d\n", atoi(argv[1]));
-   printf("this_cli_id %d\n", atoi(argv[1]));
-
-   this_cli_id = atoi(argv[1]);
-   total_cli_num = atoi(argv[1]);
-
    uint32_t partitions_h = 5;
    uint32_t partitions_w = 5;
    uint32_t fused_layers = 16;
@@ -37,33 +29,24 @@ int main(int argc, char **argv){
    char network_file[30] = "models/yolo.cfg";
    char weight_file[30] = "models/yolo.weights";
 
-   if(0 == strcmp(argv[2], "start")){  
+   if(0 == strcmp(argv[1], "start")){  
       printf("start\n");
       exec_start_gateway(START_CTRL, TCP);
-   }else if(0 == strcmp(argv[2], "wst")){
-      printf("Work stealing\n");
-      if(0 == strcmp(argv[3], "non_data_source")){
-         printf("non_data_source\n");
-         deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }else if(0 == strcmp(argv[3], "data_source")){
-         printf("data_source\n");
-         deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }else if(0 == strcmp(argv[3], "gateway")){
-         printf("gateway\n");
-         deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }
-   }else if(0 == strcmp(argv[2], "wst_s")){
-      printf("Work stealing with scheduling\n");
-      if(0 == strcmp(argv[3], "non_data_source")){
-         printf("non_data_source\n");
-         deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }else if(0 == strcmp(argv[3], "data_source")){
-         printf("data_source\n");
-         deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }else if(0 == strcmp(argv[3], "gateway")){
-         printf("gateway\n");
-         deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
-      }
+   }else if(0 == strcmp(argv[1], "gateway")){
+      printf("Gateway device\n");
+      printf("We have %d edge devices now\n", atoi(argv[1]));
+      total_cli_num = atoi(argv[2]);
+      deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
+   }else if(0 == strcmp(argv[1], "data_src")){
+      printf("Edge device\n");
+      printf("This client ID is %d\n", atoi(argv[1]));
+      this_cli_id = atoi(argv[2]);
+      deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
+   }else if(0 == strcmp(argv[1], "non_data_src")){
+      printf("Edge device\n");
+      printf("This client ID is %d\n", atoi(argv[1]));
+      this_cli_id = atoi(argv[2]);
+      deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
    }
    return 0;
 }
