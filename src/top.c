@@ -10,7 +10,7 @@
 #include "deepthings_gateway.h"
 
 /*
-./deepthings start 
+./deepthings start
 ./deepthings gateway 6
 ./deepthings data_src 0
 ./deepthings non_data_src 1
@@ -21,6 +21,8 @@
 */
 
 int main(int argc, char **argv){
+   total_cli_num = 0;
+   this_cli_id = 0;
 
    uint32_t partitions_h = 5;
    uint32_t partitions_w = 5;
@@ -34,17 +36,17 @@ int main(int argc, char **argv){
       exec_start_gateway(START_CTRL, TCP);
    }else if(0 == strcmp(argv[1], "gateway")){
       printf("Gateway device\n");
-      printf("We have %d edge devices now\n", atoi(argv[1]));
+      printf("We have %d edge devices now\n", atoi(argv[2]));
       total_cli_num = atoi(argv[2]);
       deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
    }else if(0 == strcmp(argv[1], "data_src")){
-      printf("Edge device\n");
-      printf("This client ID is %d\n", atoi(argv[1]));
+      printf("Data source edge device\n");
+      printf("This client ID is %d\n", atoi(argv[2]));
       this_cli_id = atoi(argv[2]);
       deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
    }else if(0 == strcmp(argv[1], "non_data_src")){
-      printf("Edge device\n");
-      printf("This client ID is %d\n", atoi(argv[1]));
+      printf("Idle edge device\n");
+      printf("This client ID is %d\n", atoi(argv[2]));
       this_cli_id = atoi(argv[2]);
       deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
    }
