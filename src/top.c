@@ -4,7 +4,6 @@
 #include <string.h>
 #include "deepthings_edge.h"
 #include "deepthings_gateway.h"
-
 /*
 ./deepthings -mode start
 ./deepthings -mode gateway -total_edge 6 -n 5 -m 5 -l 16
@@ -18,9 +17,7 @@
              -l <numder of fused layers>
 */
 
-/*
-"models/yolo.cfg", "models/yolo.weights"
-*/
+/*"models/yolo.cfg", "models/yolo.weights"*/
 
 int main(int argc, char **argv){
    total_cli_num = 0;
