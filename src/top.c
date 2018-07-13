@@ -17,7 +17,12 @@
              -l <numder of fused layers>
 */
 
-/*"models/yolo.cfg", "models/yolo.weights"*/
+
+/*
+   "models/yolo.cfg", 
+   "models/yolo.weights"
+*/
+
 
 int main(int argc, char **argv){
    total_cli_num = 0;
