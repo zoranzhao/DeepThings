@@ -1,7 +1,7 @@
-<p align="center"><img src="https://zoranzhao.github.io/deepthings.png" alt="DeepThings Overview" title="DeepThings"/></p>
+<p align="center"><img src="https://zoranzhao.github.io/deepthings.png" alt="DeepThings Overview" title="DeepThings" width="200px"/></p>
+
 # DeepThings
 A C Library for Distributed CNN Inference on IoT Edge Clusters 
-
 
 
 ## Building
