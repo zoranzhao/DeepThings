@@ -11,13 +11,13 @@ For more details of DeepThings, please refer to [1].
   <p>Overview of the DeepThings framework.</p>
 </div>
 
-This repository includes a lightweight, self-contained and portable C implementation of DeepThings. It uses a [NNPACK](https://github.com/digitalbrain79/NNPACK-darknet)-accelerated [Darknet](https://github.com/zoranzhao/darknet-nnpack) as the default inference. More information on porting Deepthings with different inference frameworks and platforms can be found below. 
+This repository includes a lightweight, self-contained and portable C implementation of DeepThings. It uses a [NNPACK](https://github.com/digitalbrain79/NNPACK-darknet)-accelerated [Darknet](https://github.com/zoranzhao/darknet-nnpack) as the default inference engine. More information on porting DeepThings with different inference frameworks and platforms can be found below. 
 
 ## Platforms
-The current implementation is tested on [Raspberry Pi 3 Model B](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) running [Raspbian](https://www.raspberrypi.org/downloads/raspbian/). 
+The current implementation has been tested on [Raspberry Pi 3 Model B](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) running [Raspbian](https://www.raspberrypi.org/downloads/raspbian/). 
 
 ## Building
-Edit the configuration file [include/configure.h](https://github.com/zoranzhao/DeepThings/blob/master/include/configure.h) according to your local network parameters, then run:
+Edit the configuration file [include/configure.h](https://github.com/zoranzhao/DeepThings/blob/master/include/configure.h) according to your IoT cluster parameters, then run:
 ```bash
 make clean_all
 make 
@@ -59,19 +59,19 @@ Now all the devices will wait for a trigger signal to start. You can simply do t
 ./deepthings -mode start
 ```
 
-## Porting Deepthings
+## Porting DeepThings
 One just needs to simply modify the corresponding abstraction layer files to port DeepThings.
 If you want to use a different CNN inference engine, modify: 
 ```
 src/inference_engine_helper.c
 src/inference_engine_helper.h
 ```
-If you want to port to a different OS (Currently using UNIX pthread), modify: 
+If you want to port DeepThings onto a different OS (Currently using UNIX pthread), modify: 
 ```
 distriot/src/thread_util.c
 distriot/src/thread_util.h
 ```
-If you want to port to a different networking API (Currently using UNIX socket), modify: 
+If you want to use DeepThings with different networking APIs (Currently using UNIX socket), modify: 
 ```
 distriot/src/network_util.c
 distriot/src/network_util.h
