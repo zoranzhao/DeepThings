@@ -3,6 +3,7 @@ DeepThings is a framework for locally distributed and adaptive CNN inference in 
 - A Fused Tile Partitioning (FTP) method for dividing convolutional layers into independently distributable tasks. FTP fuses layers and partitions them vertically
 in a grid fashion, which largely reduces communication and task migration overhead.
 - A distributed work stealing runtime system for IoT clusters to adaptively distribute FTP partitions in dynamic application scenarios.
+
 For more details of DeepThings, please refer to [1].
 
 <div align="center">
@@ -22,13 +23,11 @@ make clean_all
 make 
 
 ```
-This will automatically compile all related libraries and generate the DeepThings executable. If you want to run DeepThings on Raspberry Pi with NNPACK acceleration, you need first set the options in Makefile:
+This will automatically compile all related libraries and generate the DeepThings executable. If you want to run DeepThings on Raspberry Pi with NNPACK acceleration, you need first follow install [NNPACK](https://github.com/zoranzhao/darknet-nnpack/blob/2f2da6bd46b9bbfcd283e0556072f18581392f08/README.md) before running the Makefile commands, and set the options in Makefile as below:
 ```
 NNPACK=1
 ARM_NEON=1
 ```
-And follow instructions to install [NNPACK](https://github.com/zoranzhao/darknet-nnpack/blob/2f2da6bd46b9bbfcd283e0556072f18581392f08/README.md) before running the Makefile commands.
-
 
 ## Running
 An overview of DeepThings command line options is listed below:
@@ -41,7 +40,8 @@ An overview of DeepThings command line options is listed below:
 #             -l <number of fused layers: L>
 ```
 For example, assuming you have a host machine H, gateway device G, and two edge devices E0 (data source) and E1 (idle), while 
-you want to perform a 5x5 partitioning with 16 fused layers, then you need to follow the steps below:
+you want to perform a 5x5 FTP with 16 fused layers, then you need to follow the steps below:
+
 In gateway device G:
 ```bash
 ./deepthings -mode gateway -total_edge 2 -n 5 -m 5 -l 16
