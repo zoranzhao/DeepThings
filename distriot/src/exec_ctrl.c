@@ -1,8 +1,8 @@
 #include "exec_ctrl.h"
 
-void exec_start_gateway(int portno, ctrl_proto proto){
+void exec_start_gateway(int portno, ctrl_proto proto, char* gateway_public_addr){
     char request_type[20] = "start_gateway";
-    service_conn* conn = connect_service(proto, AP, portno);
+    service_conn* conn = connect_service(proto, gateway_public_addr, portno);
     send_request(request_type, 20, conn);
     close_service_connection(conn);
 }
@@ -12,8 +12,8 @@ void* start_gateway(void* conn, void* arg){
    printf("Call start_gateway, start edge devices ...\n");
    uint32_t cli_id;
    service_conn* new_conn;
-   for(cli_id = 0; cli_id < total_cli_num; cli_id ++){
-      new_conn = connect_service(((service_conn*)conn)->proto, addr_list[cli_id], START_CTRL);
+   for(cli_id = 0; cli_id < ((device_ctxt*)arg)->total_cli_num; cli_id ++){
+      new_conn = connect_service(((service_conn*)conn)->proto, ((device_ctxt*)arg)->addr_list[cli_id], START_CTRL);
       send_request(request_type, 20, new_conn);
       close_service_connection(new_conn);
    }
@@ -25,29 +25,29 @@ void* start_edge(void* conn, void* arg){
    return NULL;
 }
 
-void exec_barrier(int portno, ctrl_proto proto)
+void exec_barrier(int portno, ctrl_proto proto, device_ctxt* ctxt)
 {
    const char* request_types[]={"start_gateway", "start_edge"};
    void* (*handlers[])(void*, void*) = {start_gateway, start_edge};
    int service = service_init(portno, proto);
-   start_service_for_n_times(service, proto, request_types, 2, handlers, NULL, 1);
+   start_service_for_n_times(service, proto, request_types, 2, handlers, ctxt, 1);
    close_service(service);
 }
 
-int32_t get_client_id(const char* ip_addr){
+int32_t get_client_id(const char* ip_addr, device_ctxt* ctxt){
    uint32_t i;
-   for(i = 0; i < CLI_NUM; i++){
-      if(strcmp(ip_addr, addr_list[i]) == 0){return i;}
+   for(i = 0; i < ctxt->total_cli_num; i++){
+      if(strcmp(ip_addr, ctxt->addr_list[i]) == 0){return i;}
    }
    return (-1);//
 }
 
-char* get_client_addr(int32_t cli_id){
-   return addr_list[cli_id];
+const char* get_client_addr(int32_t cli_id, device_ctxt* ctxt){
+   return ctxt->addr_list[cli_id];
 }
 
-int32_t get_this_client_id(){
-   return this_cli_id;
+int32_t get_this_client_id(device_ctxt* ctxt){
+   return ctxt->this_cli_id;
 }
 
 

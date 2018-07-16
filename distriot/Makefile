@@ -18,7 +18,7 @@ OPTS+=-Ofast
 endif
 
 CFLAGS+=$(OPTS)
-OBJ = thread_safe_queue.o thread_util.o data_blob.o network_util.o exec_ctrl.o config.o gateway.o client.o global_queues.o
+OBJ = thread_safe_queue.o thread_util.o data_blob.o network_util.o exec_ctrl.o gateway.o client.o global_context.o
 
 OBJS = $(addprefix $(OBJDIR), $(OBJ))
 DEPS = $(wildcard */*.h) Makefile

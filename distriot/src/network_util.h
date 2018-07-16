@@ -10,6 +10,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+/*Assgin port number for different services*/
+#define PORTNO 11111 //Service for job stealing and sharing
+#define SMART_GATEWAY 11112 //Service for a smart gateway 
+#define START_CTRL 11113 //Control the start and stop of a service
+#define RESULT_COLLECT_PORT 11114 //Control the start and stop of a service
+#define WORK_STEAL_PORT 11115 //Control the start and stop of a service
+
 #define IPV4_TASK 1
 #define IPV6_TASK !(IPV4_TASK)
 
@@ -20,7 +27,6 @@
 #endif/*IPV4_TASK*/   
 
 #include "data_blob.h"
-#include "config.h"
 
 typedef enum proto{
    TCP,
