@@ -1,6 +1,7 @@
 #include "darkiot.h"
 #include "frame_partitioner.h"
-void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
+void partition_and_enqueue(device_ctxt* ctxt, uint32_t frame_num){
+   cnn_model* model = (cnn_model*)(ctxt->model);
    uint32_t task;
    network_parameters* net_para = model->net_para;
    float* data;
@@ -24,8 +25,8 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
          data_size = sizeof(float)*(dw2-dw1+1)*(dh2-dh1+1)*net_para->input_maps[0].c;
          temp = new_blob_and_copy_data((int32_t)task, data_size, (uint8_t*)data);
          free(data);
-         annotate_blob(temp, get_this_client_id(), frame_num, task);
-         enqueue(task_queue, temp);
+         annotate_blob(temp, get_this_client_id(ctxt), frame_num, task);
+         enqueue(ctxt->task_queue, temp);
          free_blob(temp);
       }
 
@@ -37,7 +38,7 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
       for(j = 0; j < model->ftp_para_reuse->partitions_w; j++){
          task = model->ftp_para_reuse->task_id[i][j];
          if(model->ftp_para_reuse->schedule[task] == 1){
-            remove_by_id(task_queue, task);
+            remove_by_id(ctxt->task_queue, task);
             /*Enqueue original size for rollback execution if adjacent partition is not ready... ...*/
             dw1 = model->ftp_para->input_tiles[task][0].w1;
             dw2 = model->ftp_para->input_tiles[task][0].w2;
@@ -51,8 +52,8 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
             data_size = sizeof(float)*(dw2-dw1+1)*(dh2-dh1+1)*net_para->input_maps[0].c;
             temp = new_blob_and_copy_data((int32_t)task, data_size, (uint8_t*)data);
             free(data);
-            annotate_blob(temp, get_this_client_id(), frame_num, task);
-            enqueue(task_queue, temp);
+            annotate_blob(temp, get_this_client_id(ctxt), frame_num, task);
+            enqueue(ctxt->task_queue, temp);
             free_blob(temp);
         }
       }
@@ -84,9 +85,10 @@ void partition_and_enqueue(cnn_model* model, uint32_t frame_num){
 
 }
 
-blob* dequeue_and_merge(cnn_model* model){
+blob* dequeue_and_merge(device_ctxt* ctxt){
    /*Check if there is a data frame whose tasks have all been collected*/
-   blob* temp = dequeue(ready_pool);
+   cnn_model* model = (cnn_model*)(ctxt->model);
+   blob* temp = dequeue(ctxt->ready_pool);
 #if DEBUG_FLAG
    printf("Check ready_pool... : Client %d is ready, merging the results\n", temp->id);
 #endif
@@ -106,7 +108,7 @@ blob* dequeue_and_merge(cnn_model* model){
    float* cropped_output;
 
    for(part = 0; part < ftp_para->partitions; part ++){
-      temp = dequeue(results_pool[cli_id]);
+      temp = dequeue(ctxt->results_pool[cli_id]);
       task = get_blob_task_id(temp);
       frame_num = get_blob_frame_seq(temp);
 

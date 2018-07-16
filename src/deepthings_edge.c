@@ -1,5 +1,4 @@
 #include "deepthings_edge.h"
-#include "config.h"
 #include "ftp.h"
 #include "inference_engine_helper.h"
 #include "frame_partitioner.h"
@@ -8,26 +7,32 @@
 static double commu_size;
 #endif
 
-cnn_model* deepthings_edge_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
-   init_client();
-   cnn_model* model;
-   model = load_cnn_model(network, weights);
+device_ctxt* deepthings_edge_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
+   device_ctxt* ctxt = init_client(edge_id);
+   cnn_model* model = load_cnn_model(network, weights);
    model->ftp_para = preform_ftp(N, M, fused_layers, model->net_para);
 #if DATA_REUSE
    model->ftp_para_reuse = preform_ftp_reuse(model->net_para, model->ftp_para);
 #endif
-   return model;
+   ctxt->model = model;
+   set_gateway_local_addr(ctxt, GATEWAY_LOCAL_ADDR);
+   set_gateway_public_addr(ctxt, GATEWAY_PUBLIC_ADDR);
+   set_total_frames(ctxt, FRAME_NUM);
+   set_batch_size(ctxt, N*M);
+
+   return ctxt;
 }
 
 #if DATA_REUSE
-void send_reuse_data(cnn_model* model, blob* task_input_blob){
+void send_reuse_data(device_ctxt* ctxt, blob* task_input_blob){
+   cnn_model* model = (cnn_model*)(ctxt->model);
    /*if task doesn't generate any reuse_data*/
    if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 1) return;
 
    service_conn* conn;
 
-   blob* temp  = self_reuse_data_serialization(model, get_blob_task_id(task_input_blob), get_blob_frame_seq(task_input_blob));
-   conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
+   blob* temp  = self_reuse_data_serialization(ctxt, get_blob_task_id(task_input_blob), get_blob_frame_seq(task_input_blob));
+   conn = connect_service(TCP, ctxt->gateway_local_addr, WORK_STEAL_PORT);
    send_request("reuse_data", 20, conn);
 #if DEBUG_DEEP_EDGE
    printf("send self reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
@@ -38,13 +43,14 @@ void send_reuse_data(cnn_model* model, blob* task_input_blob){
    close_service_connection(conn);
 }
 
-void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_data_is_required){
+void request_reuse_data(device_ctxt* ctxt, blob* task_input_blob, bool* reuse_data_is_required){
+   cnn_model* model = (cnn_model*)(ctxt->model);
    /*if task doesn't require any reuse_data*/
    if(model->ftp_para_reuse->schedule[get_blob_task_id(task_input_blob)] == 0) return;/*Task without any dependency*/
    if(!need_reuse_data_from_gateway(reuse_data_is_required)) return;/*Reuse data are all generated locally*/
 
    service_conn* conn;
-   conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
+   conn = connect_service(TCP, ctxt->gateway_local_addr, WORK_STEAL_PORT);
    send_request("request_reuse_data", 20, conn);
    char data[20]="empty";
    blob* temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), 20, (uint8_t*)data);
@@ -71,7 +77,8 @@ void request_reuse_data(cnn_model* model, blob* task_input_blob, bool* reuse_dat
 }
 #endif
 
-static inline void process_task(cnn_model* model, blob* temp, bool is_reuse){
+static inline void process_task(device_ctxt* ctxt, blob* temp, bool is_reuse){
+   cnn_model* model = (cnn_model*)(ctxt->model);
    blob* result;
    set_model_input(model, (float*)temp->data);
    forward_partition(model, get_blob_task_id(temp), is_reuse);  
@@ -80,17 +87,18 @@ static inline void process_task(cnn_model* model, blob* temp, bool is_reuse){
                                       (uint8_t*)(get_model_output(model, model->ftp_para->fused_layers-1))
                                      );
 #if DATA_REUSE
-   send_reuse_data(model, temp);
+   send_reuse_data(ctxt, temp);
 #endif
    copy_blob_meta(result, temp);
-   enqueue(result_queue, result); 
+   enqueue(ctxt->result_queue, result); 
    free_blob(result);
 
 }
 
 
 void partition_frame_and_perform_inference_thread(void *arg){
-   cnn_model* model = (cnn_model*)arg;
+   device_ctxt* ctxt = (device_ctxt*)arg;
+   cnn_model* model = (cnn_model*)(ctxt->model);
 #ifdef NNPACK
    nnp_initialize();
    model->net->threadpool = pthreadpool_create(THREAD_NUM);
@@ -104,12 +112,12 @@ void partition_frame_and_perform_inference_thread(void *arg){
 
       /*Load image and partition, fill task queues*/
       load_image_as_model_input(model, frame_num);
-      partition_and_enqueue(model, frame_num);
-      register_client();
+      partition_and_enqueue(ctxt, frame_num);
+      register_client(ctxt);
 
       /*Dequeue and process task*/
       while(1){
-         temp = try_dequeue(task_queue);
+         temp = try_dequeue(ctxt->task_queue);
          if(temp == NULL) break;
          bool data_ready = false;
 #if DEBUG_DEEP_EDGE
@@ -131,7 +139,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
             printf("Request data from gateway, is there anything missing locally? ...\n");
             print_reuse_data_is_required(reuse_data_is_required);
 #endif/*DEBUG_DEEP_EDGE*/
-            request_reuse_data(model, temp, reuse_data_is_required);
+            request_reuse_data(ctxt, temp, reuse_data_is_required);
             free(reuse_data_is_required);
          }
 #if DEBUG_DEEP_EDGE
@@ -140,7 +148,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
 #endif/*DEBUG_DEEP_EDGE*/
 
 #endif/*DATA_REUSE*/
-         process_task(model, temp, data_ready);
+         process_task(ctxt, temp, data_ready);
          free_blob(temp);
 #if DEBUG_COMMU_SIZE
          printf("======Communication size at edge is: %f======\n", ((double)commu_size)/(1024.0*1024.0*FRAME_NUM));
@@ -148,7 +156,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
       }
 
       /*Unregister and prepare for next image*/
-      cancel_client();
+      cancel_client(ctxt);
    }
 #ifdef NNPACK
    pthreadpool_destroy(model->net->threadpool);
@@ -160,16 +168,17 @@ void partition_frame_and_perform_inference_thread(void *arg){
 
 
 void steal_partition_and_perform_inference_thread(void *arg){
-   cnn_model* model = (cnn_model*)arg;
+   device_ctxt* ctxt = (device_ctxt*)arg;
    /*Check gateway for possible stealing victims*/
 #ifdef NNPACK
+   cnn_model* model = (cnn_model*)(ctxt->model);
    nnp_initialize();
    model->net->threadpool = pthreadpool_create(THREAD_NUM);
 #endif
    service_conn* conn;
    blob* temp;
    while(1){
-      conn = connect_service(TCP, GATEWAY, WORK_STEAL_PORT);
+      conn = connect_service(TCP, ctxt->gateway_local_addr, WORK_STEAL_PORT);
       send_request("steal_gateway", 20, conn);
       temp = recv_data(conn);
       close_service_connection(conn);
@@ -192,7 +201,7 @@ void steal_partition_and_perform_inference_thread(void *arg){
 #if DATA_REUSE
       blob* reuse_info_blob = recv_data(conn);
       bool* reuse_data_is_required = (bool*) reuse_info_blob->data;
-      request_reuse_data(model, temp, reuse_data_is_required);
+      request_reuse_data(ctxt, temp, reuse_data_is_required);
       if(!need_reuse_data_from_gateway(reuse_data_is_required)) data_ready = false; 
 #if DEBUG_DEEP_EDGE
       printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
@@ -203,7 +212,7 @@ void steal_partition_and_perform_inference_thread(void *arg){
       free_blob(reuse_info_blob);
 #endif
       close_service_connection(conn);
-      process_task(model, temp, data_ready);
+      process_task(ctxt, temp, data_ready);
       free_blob(temp);
    }
 #ifdef NNPACK
@@ -220,12 +229,13 @@ void send_result_thread;
 
 /*Function handling steal reqeust*/
 #if DATA_REUSE
-void* steal_client_reuse_aware(void* srv_conn, void* model){
+void* steal_client_reuse_aware(void* srv_conn, void* arg){
    printf("steal_client_reuse_aware ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
-   cnn_model* edge_model = (cnn_model*)model;
+   device_ctxt* ctxt = (device_ctxt*)arg;
+   cnn_model* edge_model = (cnn_model*)(ctxt->model);
 
-   blob* temp = try_dequeue(task_queue);
+   blob* temp = try_dequeue(ctxt->task_queue);
    if(temp == NULL){
       char data[20]="empty";
       temp = new_blob_and_copy_data(-1, 20, (uint8_t*)data);
@@ -276,10 +286,11 @@ void* steal_client_reuse_aware(void* srv_conn, void* model){
    return NULL;
 }
 
-void* update_coverage(void* srv_conn, void* model){
+void* update_coverage(void* srv_conn, void* arg){
    printf("update_coverage ... ... \n");
    service_conn *conn = (service_conn *)srv_conn;
-   cnn_model* edge_model = (cnn_model*)model;
+   device_ctxt* ctxt = (device_ctxt*)arg;
+   cnn_model* edge_model = (cnn_model*)(ctxt->model);
 
    blob* temp = recv_data(conn);
 #if DEBUG_DEEP_EDGE
@@ -310,29 +321,29 @@ void deepthings_serve_stealing_thread(void *arg){
 }
 
 
-void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
+void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
 
 
-   cnn_model* model = deepthings_edge_init(N, M, fused_layers, network, weights);
-   exec_barrier(START_CTRL, TCP);
+   device_ctxt* ctxt = deepthings_edge_init(N, M, fused_layers, network, weights, edge_id);
+   exec_barrier(START_CTRL, TCP, ctxt);
 
-   sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, model, 0, 0);
-   sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
+   sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, ctxt, 0, 0);
+   sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, ctxt, 0, 0);
 
    sys_thread_join(t1);
    sys_thread_join(t2);
 
 }
 
-void deepthings_victim_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights){
+void deepthings_victim_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
 
 
-   cnn_model* model = deepthings_edge_init(N, M, fused_layers, network, weights);
-   exec_barrier(START_CTRL, TCP);
+   device_ctxt* ctxt = deepthings_edge_init(N, M, fused_layers, network, weights, edge_id);
+   exec_barrier(START_CTRL, TCP, ctxt);
 
-   sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, model, 0, 0);
-   sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, model, 0, 0);
-   sys_thread_t t3 = sys_thread_new("deepthings_serve_stealing_thread", deepthings_serve_stealing_thread, model, 0, 0);
+   sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, ctxt, 0, 0);
+   sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, ctxt, 0, 0);
+   sys_thread_t t3 = sys_thread_new("deepthings_serve_stealing_thread", deepthings_serve_stealing_thread, ctxt, 0, 0);
 
    sys_thread_join(t1);
    sys_thread_join(t2);

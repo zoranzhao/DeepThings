@@ -2,6 +2,7 @@
 #define FTP_H
 #include "configure.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct partition_range{
     int32_t w1;

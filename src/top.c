@@ -23,7 +23,7 @@
 */
 
 /*"models/yolo.cfg", "models/yolo.weights"*/
-
+static const char* addr_list[MAX_EDGE_NUM] = EDGE_ADDR_LIST;
 
 int main(int argc, char **argv){
    uint32_t total_cli_num = 0;
@@ -38,22 +38,22 @@ int main(int argc, char **argv){
 
    if(0 == strcmp(get_string_arg(argc, argv, "-mode", "none"), "start")){  
       printf("start\n");
-      exec_start_gateway(START_CTRL, TCP);
+      exec_start_gateway(START_CTRL, TCP, GATEWAY_PUBLIC_ADDR);
    }else if(0 == strcmp(get_string_arg(argc, argv, "-mode", "none"), "gateway")){
       printf("Gateway device\n");
       printf("We have %d edge devices now\n", get_int_arg(argc, argv, "-total_edge", 0));
       total_cli_num = get_int_arg(argc, argv, "-total_edge", 0);
-      deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file);
+      deepthings_gateway(partitions_h, partitions_w, fused_layers, network_file, weight_file, total_cli_num, addr_list);
    }else if(0 == strcmp(get_string_arg(argc, argv, "-mode", "none"), "data_src")){
       printf("Data source edge device\n");
       printf("This client ID is %d\n", get_int_arg(argc, argv, "-edge_id", 0));
       this_cli_id = get_int_arg(argc, argv, "-edge_id", 0);
-      deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
+      deepthings_victim_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file, this_cli_id);
    }else if(0 == strcmp(get_string_arg(argc, argv, "-mode", "none"), "non_data_src")){
       printf("Idle edge device\n");
       printf("This client ID is %d\n", get_int_arg(argc, argv, "-edge_id", 0));
       this_cli_id = get_int_arg(argc, argv, "-edge_id", 0);
-      deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file);
+      deepthings_stealer_edge(partitions_h, partitions_w, fused_layers, network_file, weight_file, this_cli_id);
    }
    return 0;
 }

@@ -1,7 +1,8 @@
 #include "reuse_data_serialization.h"
 #if DATA_REUSE
 
-blob* self_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t frame_num){
+blob* self_reuse_data_serialization(device_ctxt* ctxt, uint32_t task_id, uint32_t frame_num){
+   cnn_model* model = (cnn_model*)(ctxt->model);
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
    network_parameters* net_para = model->net_para;
    overlapped_tile_data regions_and_data;
@@ -36,7 +37,7 @@ blob* self_reuse_data_serialization(cnn_model* model, uint32_t task_id, uint32_t
    reuse_data = reuse_data - size;
    size = (size) * sizeof(float);
    blob* temp = new_blob_and_copy_data((int32_t)task_id, size, (uint8_t*)reuse_data);
-   annotate_blob(temp, get_this_client_id(), frame_num, task_id);
+   annotate_blob(temp, get_this_client_id(ctxt), frame_num, task_id);
    free(reuse_data);
    free(adjacent_id);
    return temp;
