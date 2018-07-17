@@ -19,7 +19,7 @@ make ARGS="1 wst non_data_source" test
 make ARGS="2 wst non_data_source" test
 */
 
-static const char* addr_list[TOTAL_EDGE_NUM] =EDGE_ADDR_LIST;
+static const char* addr_list[MAX_EDGE_NUM] = EDGE_ADDR_LIST;
 
 void test_gateway(uint32_t total_number){
    device_ctxt* ctxt = init_gateway(total_number, addr_list);
