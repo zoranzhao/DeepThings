@@ -31,7 +31,7 @@ ARM_NEON=1
 
 ## Downloading pre-trained CNN models and input data
 In order to perform distributed inference, you need to download pre-trained CNN models and put it in [./models](https://github.com/SLAM-Lab/DeepThings/tree/master/models) folder.
-Current implementation is tested with YOLOv2, which can be downloaded from [YOLOv2 model](https://github.com/pjreddie/darknet/blob/master/cfg/yolov2.cfg) and [YOLOv2 weights](https://pjreddie.com/media/files/yolov2.weights).
+Current implementation is tested with YOLOv2, which can be downloaded from [YOLOv2 model](https://github.com/zoranzhao/DeepThings/blob/master/models/yolo.cfg) and [YOLOv2 weights](https://pjreddie.com/media/files/yolo.weights).
 
 For input data, images need to be numbered (starting from 0) and renamed as <#>.jpg, and placed in [./data/input](https://github.com/SLAM-Lab/DeepThings/tree/master/data/input) folder.
 
