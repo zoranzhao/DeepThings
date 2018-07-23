@@ -40,7 +40,7 @@ An overview of DeepThings command line options is listed below:
 ```bash
 #./deepthings -mode <execution mode: {start, gateway, data_src, non_data_src}> 
 #             -total_edge <total edge number: t> 
-#             -edge_id <edge device ID: e={0, ... t-1}>
+#             -edge_id <edge device ID: {0, ... t-1}>
 #             -n <FTP dimension: N> 
 #             -m <FTP dimension: M> 
 #             -l <number of fused layers: L>
