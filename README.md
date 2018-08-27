@@ -7,7 +7,7 @@ in a grid fashion, which largely reduces communication and task migration overhe
 For more details of DeepThings, please refer to [1].
 
 <div align="center">
-  <img src="https://zoranzhao.github.io/images/deepthings.png" width="400px" />
+  <img src="https://zoranzhao.github.io/deepthings.png" width="400px" />
   <p>Overview of the DeepThings framework.</p>
 </div>
 
