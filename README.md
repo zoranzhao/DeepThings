@@ -68,21 +68,14 @@ Now all the devices will wait for a trigger signal to start. You can simply do t
 ## Porting DeepThings
 One just needs to simply modify the corresponding abstraction layer files to port DeepThings.
 If you want to use a different CNN inference engine, modify: 
-
 - [src/inference_engine_helper.c](https://github.com/zoranzhao/DeepThings/blob/master/src/inference_engine_helper.c)
 - [src/inference_engine_helper.h](https://github.com/zoranzhao/DeepThings/blob/master/src/inference_engine_helper.h)
-
-
 If you want to port DeepThings onto a different OS (Currently using UNIX pthread), modify: 
-```
-distriot/src/thread_util.c
-distriot/src/thread_util.h
-```
+- [distriot/src/thread_util.c](https://github.com/zoranzhao/DeepThings/blob/master/distriot/src/thread_util.c)
+- [distriot/src/thread_util.h](https://github.com/zoranzhao/DeepThings/blob/master/distriot/src/thread_util.h)
 If you want to use DeepThings with different networking APIs (Currently using UNIX socket), modify: 
-```
-distriot/src/network_util.c
-distriot/src/network_util.h
-```
+- [distriot/src/network_util.c](https://github.com/zoranzhao/DeepThings/blob/master/distriot/src/network_util.c)
+- [distriot/src/network_util.h](https://github.com/zoranzhao/DeepThings/blob/master/distriot/src/network_util.h)
 
 
 ## References:
