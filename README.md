@@ -68,10 +68,11 @@ Now all the devices will wait for a trigger signal to start. You can simply do t
 ## Porting DeepThings
 One just needs to simply modify the corresponding abstraction layer files to port DeepThings.
 If you want to use a different CNN inference engine, modify: 
-```
-[src/inference_engine_helper.c](https://github.com/zoranzhao/DeepThings/blob/master/src/inference_engine_helper.c)
-src/inference_engine_helper.h
-```
+
+- [src/inference_engine_helper.c](https://github.com/zoranzhao/DeepThings/blob/master/src/inference_engine_helper.c)
+- [src/inference_engine_helper.h](https://github.com/zoranzhao/DeepThings/blob/master/src/inference_engine_helper.h)
+
+
 If you want to port DeepThings onto a different OS (Currently using UNIX pthread), modify: 
 ```
 distriot/src/thread_util.c
