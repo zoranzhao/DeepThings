@@ -16,7 +16,7 @@ int32_t sys_sem_new(struct sys_sem **sem, uint8_t count);
 void sys_sem_signal(struct sys_sem **s);
 uint32_t sys_arch_sem_wait(struct sys_sem **s, uint32_t timeout);
 void sys_sem_free(struct sys_sem **sem);
-void sys_sleep();
+void sys_sleep(uint32_t milliseconds);
 uint32_t sys_now(void);
 double sys_now_in_sec(void);
 #endif
