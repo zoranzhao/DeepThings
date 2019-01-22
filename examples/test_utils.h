@@ -19,4 +19,4 @@ void transfer_data(device_ctxt* client, device_ctxt* gateway);
 void deepthings_merge_result_thread_single_device(void *arg);
 void partition_frame_and_perform_inference_thread_single_device(void *arg);
 
-#endif
+#endif/*TEST_UTIL*/
