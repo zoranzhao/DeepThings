@@ -2,9 +2,9 @@ OPENMP=1
 NNPACK=0
 ARM_NEON=0
 DEBUG=1
-DEEPTHINGS=../DeepThings
+DEEPTHINGS=..
 DARKNET=../darknet-nnpack
-DISTRIOT=../DistrIoT
+DISTRIOT=../distriot
 
 VPATH=$(DEEPTHINGS)/src:./
 OBJDIR=./obj/
@@ -14,7 +14,7 @@ DISTRIOTLIB=libdistriot.a
 SLIB=lib$(EXEC).so
 ALIB=lib$(EXEC).a
 
-CC=g++
+CC=gcc
 AR=ar
 ARFLAGS=rcs
 LDFLAGS= -lm -pthread

@@ -1,9 +1,4 @@
 #include "test_utils.h"
-#include "ftp.h"
-#include "inference_engine_helper.h"
-#include "frame_partitioner.h"
-#include "reuse_data_serialization.h"
-
 
 void process_everything_in_gateway(void *arg){
    cnn_model* model = (cnn_model*)(((device_ctxt*)(arg))->model);

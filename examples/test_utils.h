@@ -1,11 +1,15 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef TEST_UTIL_H
+#define TEST_UTIL_H
 #include "darkiot.h"
 #include "configure.h"
+#include "ftp.h"
 #include "cmd_line_parser.h"
 #include "frame_partitioner.h"
 #include "deepthings_edge.h"
 #include "deepthings_gateway.h"
+#include "inference_engine_helper.h"
+#include "frame_partitioner.h"
+#include "reuse_data_serialization.h"
 
 /*Functions defined for testing and profiling*/
 void process_task_single_device(device_ctxt* ctxt, blob* temp, bool is_reuse);
