@@ -35,7 +35,7 @@ Current implementation is tested with YOLOv2, which can be downloaded from [YOLO
 
 For input data, images need to be numbered (starting from 0) and renamed as <#>.jpg, and placed in [./data/input](https://github.com/SLAM-Lab/DeepThings/tree/master/data/input) folder.
 
-## Running
+## Running in a IoT cluster
 An overview of DeepThings command line options is listed below:
 ```bash
 #./deepthings -mode <execution mode: {start, gateway, data_src, non_data_src}> 
@@ -64,6 +64,17 @@ Now all the devices will wait for a trigger signal to start. You can simply do t
 ```bash
 ./deepthings -mode start
 ```
+
+## Running in a single device
+Many people want to first try the FTP-partitioned inference in a single device. Now you can find a single-device execution example in [./exampless](https://github.com/SLAM-Lab/DeepThings/tree/master/examples) folder. To run it:
+```bash
+make clean_all
+make
+make test
+```
+This will first initialize a gateway context and a client context in different local threads. FTP partition inference results will be transferred between queues associated with each context to emulate the inter-device communication.
+
+
 
 ## Porting DeepThings
 One just needs to simply modify the corresponding abstraction layer files to port DeepThings.
