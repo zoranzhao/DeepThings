@@ -103,7 +103,7 @@ static struct sys_sem * sys_sem_new_internal(uint8_t count)
   return sem;
 }
 
-int32_t sys_sem_new(struct sys_sem **sem, uint8_t count)
+int8_t sys_sem_new(struct sys_sem **sem, uint8_t count)
 {
   *sem = sys_sem_new_internal(count);
   if (*sem == NULL) {

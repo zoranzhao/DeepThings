@@ -46,7 +46,7 @@ typedef struct service_connection{
 /*Networking API on service client side*/
 service_conn* connect_service(ctrl_proto proto, const char *dest_ip, int portno);
 void close_service_connection(service_conn* conn);
-void send_request(void* meta, uint32_t meta_size, service_conn* conn);
+void send_request(char* meta, uint32_t meta_size, service_conn* conn);
 
 /*Networking API on service server side*/
 int service_init(int portno, ctrl_proto proto);

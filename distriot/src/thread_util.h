@@ -12,7 +12,7 @@ void sys_thread_join(sys_thread_t thread);
 /*Semaphore APIs*/
 struct sys_sem;
 typedef struct sys_sem* sys_sem_t;
-int32_t sys_sem_new(struct sys_sem **sem, uint8_t count);
+int8_t sys_sem_new(struct sys_sem **sem, uint8_t count);
 void sys_sem_signal(struct sys_sem **s);
 uint32_t sys_arch_sem_wait(struct sys_sem **s, uint32_t timeout);
 void sys_sem_free(struct sys_sem **sem);

@@ -152,7 +152,7 @@ blob* recv_data(service_conn* conn){
    return tmp;
 }
 
-void send_request(void* req, uint32_t req_size, service_conn* conn){
+void send_request(char* req, uint32_t req_size, service_conn* conn){
    blob* temp = new_blob_and_copy_data(0, req_size, (uint8_t*)req);
    send_data(temp, conn);
    free_blob(temp);  
