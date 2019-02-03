@@ -2,6 +2,10 @@
 #define THREAD_UTIL_H
 
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef void (*thread_fn)(void *arg);
 struct sys_thread;
 typedef struct sys_thread* sys_thread_t;
@@ -19,4 +23,8 @@ void sys_sem_free(struct sys_sem **sem);
 void sys_sleep(uint32_t milliseconds);
 uint32_t sys_now(void);
 double sys_now_in_sec(void);
+#ifdef __cplusplus
+}
 #endif
+
+#endif /*THREAD_UTIL_H*/
