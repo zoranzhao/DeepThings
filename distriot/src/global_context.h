@@ -5,6 +5,9 @@
 #define ADDR_LEN 64 
 #define MAX_QUEUE_SIZE 256
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct dev_ctxt {
    thread_safe_queue** results_pool;
    thread_safe_queue* ready_pool;
@@ -31,5 +34,9 @@ void set_batch_size(device_ctxt* ctxt, uint32_t size);
 void set_gateway_local_addr(device_ctxt* ctxt, const char* addr);
 void set_gateway_public_addr(device_ctxt* ctxt, const char* addr);
 void set_total_frames(device_ctxt* ctxt, uint32_t frame_num);
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

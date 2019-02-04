@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct ts_blob {
    uint8_t *data;
    uint32_t size;
@@ -24,4 +27,8 @@ void copy_blob_meta(blob* dest, blob* src);
 
 blob* write_file_to_blob(const char *filename);
 void write_blob_to_file(const char *filename, blob* temp);
+#ifdef __cplusplus
+}
+#endif
+
 #endif

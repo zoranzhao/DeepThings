@@ -4,6 +4,9 @@
 #include "data_blob.h"
 #include "stdio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct ts_node {
    blob* item;
    struct ts_node* next;
@@ -27,5 +30,8 @@ void remove_by_id(thread_safe_queue *q, int32_t id);
 void print_queue_by_id(thread_safe_queue *queue);
 blob* try_dequeue(thread_safe_queue *queue);
 void free_queue(thread_safe_queue *q);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
