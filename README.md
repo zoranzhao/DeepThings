@@ -92,7 +92,7 @@ If you want to use DeepThings with different networking APIs (Currently using UN
 
 
 ## References:
-[1] Z. Zhao, K. Mirzazad and A. Gerstlauer, "[DeepThings: Distributed Adaptive Deep Learning Inference on Resource-Constrained IoT Edge Clusters](https://ieeexplore.ieee.org/document/8493499)," CODES+ISSS 2018, special issue of IEEE Transactions on 
+[1] Z. Zhao, K. Mirzazad and A. Gerstlauer, "[DeepThings: Distributed Adaptive Deep Learning Inference on Resource-Constrained IoT Edge Clusters](https://zoranzhao.github.io/docs/deepthings_2018.pdf)," CODES+ISSS 2018, special issue of IEEE Transactions on 
 Computer-Aided Design of Integrated Circuits and Systems (TCAD).
 
 ## Contact:
