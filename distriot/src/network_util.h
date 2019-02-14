@@ -58,4 +58,7 @@ void close_service(int sockfd);
 blob* recv_data(service_conn* conn);
 void send_data(blob *temp, service_conn* conn);
 
+/*IP address parsing API*/
+void get_dest_ip_string(char* ip_string, service_conn* conn);
+
 #endif

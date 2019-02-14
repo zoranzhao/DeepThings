@@ -336,3 +336,12 @@ static inline service_conn* new_service_conn(int sockfd, ctrl_proto proto, const
    }
    return conn; 
 }
+
+void get_dest_ip_string(char* ip_string, service_conn* conn){
+   #if IPV4_TASK
+   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_string, ADDRSTRLEN);
+   #elif IPV6_TASK/*IPV4_TASK*/
+   inet_ntop(conn->serv_addr_ptr->sin6_family, &(conn->serv_addr_ptr->sin6_addr), ip_string, ADDRSTRLEN);
+   #endif/*IPV4_TASK*/ 
+}
+

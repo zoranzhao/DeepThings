@@ -35,7 +35,7 @@ void* result_gateway(void* srv_conn, void* arg){
 #if DEBUG_FLAG
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   get_dest_ip_string(ip_addr, conn);
    processing_cli_id = get_client_id(ip_addr, ctxt);
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
@@ -86,7 +86,7 @@ void* register_gateway(void* srv_conn, void *arg){
    service_conn *conn = (service_conn *)srv_conn;
    device_ctxt* ctxt = (device_ctxt*)arg;
    char ip_addr[ADDRSTRLEN];
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
+   get_dest_ip_string(ip_addr, conn);
    blob* temp = new_blob_and_copy_data(get_client_id(ip_addr, ctxt), ADDRSTRLEN, (uint8_t*)ip_addr);
    enqueue(ctxt->registration_list, temp);
    free_blob(temp);
@@ -112,7 +112,7 @@ void* cancel_gateway(void* srv_conn, void *arg){
    service_conn *conn = (service_conn *)srv_conn;
    device_ctxt* ctxt = (device_ctxt*)arg;
    char ip_addr[ADDRSTRLEN];
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);  
+   get_dest_ip_string(ip_addr, conn);
    int32_t cli_id = get_client_id(ip_addr, ctxt);
    remove_by_id(ctxt->registration_list, cli_id);
    return NULL;
