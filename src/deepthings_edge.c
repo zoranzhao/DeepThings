@@ -193,6 +193,7 @@ void steal_partition_and_perform_inference_thread(void *arg){
       free_blob(temp);
       temp = recv_data(conn);
       if(temp->id == -1){
+         close_service_connection(conn);
          free_blob(temp);
          sys_sleep(100);
          continue;
