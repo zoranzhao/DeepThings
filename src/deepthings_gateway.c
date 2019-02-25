@@ -53,7 +53,7 @@ void* deepthings_result_gateway(void* srv_conn, void* arg){
 #if DEBUG_FLAG
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   get_dest_ip_string(ip_addr, conn);
    processing_cli_id = get_client_id(ip_addr, ctxt);
 #if DEBUG_TIMING
    double total_time;
@@ -165,7 +165,7 @@ void* recv_reuse_data_from_edge(void* srv_conn, void* arg){
 
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   get_dest_ip_string(ip_addr, conn);
    processing_cli_id = get_client_id(ip_addr, (device_ctxt*)arg);
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
@@ -208,7 +208,7 @@ void* send_reuse_data_to_edge(void* srv_conn, void* arg){
 #if DEBUG_DEEP_GATEWAY
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
-   inet_ntop(conn->serv_addr_ptr->sin_family, &(conn->serv_addr_ptr->sin_addr), ip_addr, ADDRSTRLEN);
+   get_dest_ip_string(ip_addr, conn);
    processing_cli_id = get_client_id(ip_addr, ctxt);
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
