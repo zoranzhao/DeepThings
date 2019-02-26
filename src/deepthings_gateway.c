@@ -12,6 +12,8 @@ static uint32_t acc_frames[MAX_EDGE_NUM];
 static double commu_size;
 #endif
 
+/*TODO, the task counters should be included in the context object*/
+static results_counter_per_frame[MAX_EDGE_NUM][FRAME_NUM];
 device_ctxt* deepthings_gateway_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t total_edge_number, const char** addr_list){
    device_ctxt* ctxt = init_gateway(total_edge_number, addr_list);
    cnn_model* model = load_cnn_model(network, weights);
@@ -24,6 +26,13 @@ device_ctxt* deepthings_gateway_init(uint32_t N, uint32_t M, uint32_t fused_laye
    set_gateway_public_addr(ctxt, GATEWAY_PUBLIC_ADDR);
    set_total_frames(ctxt, FRAME_NUM);
    set_batch_size(ctxt, N*M);
+
+   uint32_t cli, frame_seq;
+   for(cli = 0; cli < MAX_EDGE_NUM; cli++){
+      for(frame_seq = 0; frame_seq < FRAME_NUM; frame_seq++){
+         results_counter_per_frame[cli][frame_seq] = 0;
+      }
+   }
 
    return ctxt;
 }
@@ -71,13 +80,14 @@ void* deepthings_result_gateway(void* srv_conn, void* arg){
    commu_size = commu_size + temp->size;
 #endif
 #if DEBUG_FLAG
-   printf("Result from %d: %s is for client %d, total number recved is %d\n", processing_cli_id, ip_addr, cli_id, ctxt->results_counter[cli_id]);
+   printf("Result from %d: %s is for client %d, total number recved for frame %d is %d\n", processing_cli_id, ip_addr, cli_id, frame_seq, results_counter_per_frame[cli_id][frame_seq]);
 #endif
    enqueue(ctxt->results_pool[cli_id], temp);
    free_blob(temp);
-   ctxt->results_counter[cli_id]++;
-   if(ctxt->results_counter[cli_id] == ctxt->batch_size){
+   results_counter_per_frame[cli_id][frame_seq]++;
+   if(results_counter_per_frame[cli_id][frame_seq] == ctxt->batch_size){
       temp = new_empty_blob(cli_id);
+      annotate_blob(temp, cli_id, frame_seq, 0);
 #if DEBUG_FLAG
       printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
 #endif
@@ -102,7 +112,7 @@ void* deepthings_result_gateway(void* srv_conn, void* arg){
 #endif
       enqueue(ctxt->ready_pool, temp);
       free_blob(temp);
-      ctxt->results_counter[cli_id] = 0;
+      results_counter_per_frame[cli_id][frame_seq] = 0;
    }
 
    return NULL;

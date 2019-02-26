@@ -93,6 +93,7 @@ blob* dequeue_and_merge(device_ctxt* ctxt){
    printf("Check ready_pool... : Client %d is ready, merging the results\n", temp->id);
 #endif
    uint32_t cli_id = temp->id;
+   uint32_t frame_num = get_blob_frame_seq(temp);
    free_blob(temp);
 
    ftp_parameters *ftp_para = model->ftp_para;
@@ -104,13 +105,16 @@ blob* dequeue_and_merge(device_ctxt* ctxt){
    uint32_t stage_out_size = sizeof(float)*stage_outs;  
    uint32_t part = 0;
    uint32_t task = 0;
-   uint32_t frame_num = 0;
    float* cropped_output;
 
-   for(part = 0; part < ftp_para->partitions; part ++){
+   while(part < ftp_para->partitions){
       temp = dequeue(ctxt->results_pool[cli_id]);
       task = get_blob_task_id(temp);
-      frame_num = get_blob_frame_seq(temp);
+      if(frame_num == get_blob_frame_seq(temp)) part++;
+      else {
+         enqueue(ctxt->results_pool[cli_id], temp);
+         free_blob(temp);
+      }
 
       if(net_para->type[ftp_para->fused_layers-1] == CONV_LAYER){
          tile_region tmp = relative_offsets(ftp_para->input_tiles[task][ftp_para->fused_layers-1], 
