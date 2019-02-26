@@ -104,13 +104,14 @@ static inline void process_task(device_ctxt* ctxt, blob* temp, bool is_reuse){
    blob* result;
    set_model_input(model, (float*)temp->data);
    forward_partition(model, get_blob_task_id(temp), is_reuse);  
+#if DATA_REUSE
+   set_coverage(model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp));
+   send_reuse_data(ctxt, temp);
+#endif
    result = new_blob_and_copy_data(0, 
                                       get_model_byte_size(model, model->ftp_para->fused_layers-1), 
                                       (uint8_t*)(get_model_output(model, model->ftp_para->fused_layers-1))
                                      );
-#if DATA_REUSE
-   send_reuse_data(ctxt, temp);
-#endif
    copy_blob_meta(result, temp);
    enqueue(ctxt->result_queue, result); 
    free_blob(result);
@@ -146,7 +147,7 @@ void partition_frame_and_perform_inference_thread(void *arg){
          printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
 #endif/*DEBUG_DEEP_EDGE*/
 #if DATA_REUSE
-         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
+         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp), frame_num);
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
             blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
@@ -277,7 +278,7 @@ void* steal_client_reuse_aware(void* srv_conn, void* arg){
       reuse_data_is_required[position] = false;
    }
 
-   if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(edge_model->ftp_para_reuse, get_blob_task_id(temp))) {
+   if(edge_model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1 && is_reuse_ready(edge_model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp))) {
       uint32_t position;
       int32_t* adjacent_id = get_adjacent_task_id_list(edge_model, task_id);
       for(position = 0; position < 4; position++){
@@ -319,8 +320,8 @@ void* update_coverage(void* srv_conn, void* arg){
 #if DEBUG_DEEP_EDGE
    printf("set coverage for task %d\n", get_blob_task_id(temp));
 #endif
-   set_coverage(edge_model->ftp_para_reuse, get_blob_task_id(temp));
-   set_missing(edge_model->ftp_para_reuse, get_blob_task_id(temp));
+   set_coverage(edge_model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp));
+   set_missing(edge_model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp));
    free_blob(temp);
    return NULL;
 }

@@ -323,7 +323,6 @@ void forward_partition(cnn_model* model, uint32_t task_id, bool is_reuse){
 
 #if DATA_REUSE
    if (to_free_next_layer_input == 1) free(stitched_next_layer_input);
-   set_coverage(model->ftp_para_reuse, task_id);
 #endif
 }
 

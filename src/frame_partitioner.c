@@ -61,7 +61,7 @@ void partition_and_enqueue(device_ctxt* ctxt, uint32_t frame_num){
 
 
    ftp_parameters_reuse* ftp_para_reuse = model->ftp_para_reuse;
-   clean_coverage(ftp_para_reuse);
+   clean_coverage(ftp_para_reuse, frame_num);
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];

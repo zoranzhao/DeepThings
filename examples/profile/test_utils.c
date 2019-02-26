@@ -110,6 +110,7 @@ void process_task_single_device(device_ctxt* edge_ctxt, device_ctxt* gateway_ctx
 #if DATA_REUSE
    /*send_reuse_data(ctxt, temp);*/
    /*if task doesn't generate any reuse_data*/
+   set_coverage(model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp));
    send_reuse_data_single_device(edge_ctxt, gateway_ctxt, temp);
 #endif
 
@@ -148,7 +149,7 @@ void partition_frame_and_perform_inference_thread_single_device(device_ctxt* edg
          bool data_ready = false;
          printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
 #if DATA_REUSE
-         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
+         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp), frame_num);
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
             blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),

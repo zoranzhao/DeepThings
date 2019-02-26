@@ -350,64 +350,64 @@ ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parame
    return ftp_para_reuse;
 }
 
-void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
-   ftp_para_reuse->coverage[task_id]=1;
+void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num){
+   ftp_para_reuse->coverage[task_id][frame_num]=1;
 }
 
-void set_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
-   ftp_para_reuse->missing[task_id]=1;
+void set_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num){
+   ftp_para_reuse->missing[task_id][frame_num]=1;
 }
 
-uint32_t get_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
-   return ftp_para_reuse->missing[task_id];
+uint32_t get_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num){
+   return ftp_para_reuse->missing[task_id][frame_num];
 }
 
-uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
-   return ftp_para_reuse->coverage[task_id];
+uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num){
+   return ftp_para_reuse->coverage[task_id][frame_num];
 }
 
-void clean_coverage(ftp_parameters_reuse* ftp_para_reuse){
+void clean_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t frame_num){
    uint32_t task;
    uint32_t i, j;
    for(i = 0; i < ftp_para_reuse->partitions_h; i++){
       for(j = 0; j < ftp_para_reuse->partitions_w; j++){
          task = ftp_para_reuse->task_id[i][j];
-         ftp_para_reuse->coverage[task]=0;
-         ftp_para_reuse->missing[task]=0;
+         ftp_para_reuse->coverage[task][frame_num]=0;
+         ftp_para_reuse->missing[task][frame_num]=0;
       }
    }
 }
 
 
-bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id){
+bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num){
    uint32_t i = task_id/(ftp_para_reuse->partitions_w);
    uint32_t j = task_id%(ftp_para_reuse->partitions_w);
    uint32_t adj_task;
    bool ready = true;
    if(i + 1 < ftp_para_reuse->partitions_h){
       adj_task = ftp_para_reuse->task_id[i+1][j];
-      if(ftp_para_reuse->coverage[adj_task] == 0) {
+      if(ftp_para_reuse->coverage[adj_task][frame_num] == 0) {
          ready = false;
          return ready;
       }	
    }
    if(j + 1 < ftp_para_reuse->partitions_w){
       adj_task = ftp_para_reuse->task_id[i][j+1];
-      if(ftp_para_reuse->coverage[adj_task] == 0) {
+      if(ftp_para_reuse->coverage[adj_task][frame_num] == 0) {
          ready = false;
          return ready;
       }	
    }
    if(j > 0){
       adj_task = ftp_para_reuse->task_id[i][j-1];
-      if(ftp_para_reuse->coverage[adj_task] == 0) {
+      if(ftp_para_reuse->coverage[adj_task][frame_num] == 0) {
          ready = false;
          return ready;
       }	
    }
    if(i > 0){
       adj_task = ftp_para_reuse->task_id[i-1][j];
-      if(ftp_para_reuse->coverage[adj_task] == 0) {
+      if(ftp_para_reuse->coverage[adj_task][frame_num] == 0) {
          ready = false;
          return ready;
       }	

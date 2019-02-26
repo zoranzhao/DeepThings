@@ -35,7 +35,7 @@ bool* check_local_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_nu
    for(pos = 0; pos < 4; pos++){
       reuse_data_is_required[pos] = true;
       if(adjacent_id[pos]!=-1){
-         if(get_coverage(ftp_para_reuse, adjacent_id[pos])==1) reuse_data_is_required[pos] = false;
+         if(get_coverage(ftp_para_reuse, adjacent_id[pos], frame_num)==1) reuse_data_is_required[pos] = false;
       }else{
          reuse_data_is_required[pos] = false;
       }
@@ -52,7 +52,7 @@ bool* check_missing_coverage(cnn_model* model, uint32_t task_id, uint32_t frame_
    for(pos = 0; pos < 4; pos++){
       reuse_data_is_required[pos] = true;
       if(adjacent_id[pos]!=-1){
-         if(get_missing(ftp_para_reuse, adjacent_id[pos])==0) reuse_data_is_required[pos] = false;
+         if(get_missing(ftp_para_reuse, adjacent_id[pos], frame_num)==0) reuse_data_is_required[pos] = false;
       }else{
          reuse_data_is_required[pos] = false;
       }

@@ -54,8 +54,8 @@ typedef struct def_ftp_parameters_reuse{
    uint32_t shrinked_input_size[PARTITIONS_MAX];
    uint32_t adjacent_reuse_data_size[PARTITIONS_MAX];
    uint32_t self_reuse_data_size[PARTITIONS_MAX];
-   uint32_t coverage[PARTITIONS_MAX];
-   uint32_t missing[PARTITIONS_MAX];
+   uint32_t coverage[PARTITIONS_MAX][FRAME_NUM];
+   uint32_t missing[PARTITIONS_MAX][FRAME_NUM];
    uint32_t partitions;
    uint32_t partitions_w;
    uint32_t partitions_h;
@@ -68,12 +68,12 @@ typedef struct def_ftp_parameters_reuse{
 } ftp_parameters_reuse;
 
 ftp_parameters_reuse* preform_ftp_reuse(network_parameters* net_para, ftp_parameters* ftp_para);
-uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
-void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
-void set_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
-uint32_t get_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
-void clean_coverage(ftp_parameters_reuse* ftp_para_reuse);
-bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id);
+uint32_t get_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num);
+void set_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num);
+void set_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num);
+uint32_t get_missing(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num);
+void clean_coverage(ftp_parameters_reuse* ftp_para_reuse, uint32_t frame_num);
+bool is_reuse_ready(ftp_parameters_reuse* ftp_para_reuse, uint32_t task_id, uint32_t frame_num);
 
 tile_region get_region(overlapped_tile_data * overlap, uint32_t pos);
 uint32_t get_size(overlapped_tile_data * overlap, uint32_t pos);

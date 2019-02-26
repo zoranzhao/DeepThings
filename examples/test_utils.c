@@ -32,6 +32,7 @@ void process_task_single_device(device_ctxt* ctxt, blob* temp, bool is_reuse){
                                       (uint8_t*)(get_model_output(model, model->ftp_para->fused_layers-1))
                                      );
 #if DATA_REUSE
+   set_coverage(model->ftp_para_reuse, get_blob_task_id(temp), get_blob_frame_seq(temp));
    /*send_reuse_data(ctxt, temp);*/
    /*if task doesn't generate any reuse_data*/
    blob* task_input_blob=temp;
@@ -73,7 +74,7 @@ void partition_frame_and_perform_inference_thread_single_device(void *arg){
          bool data_ready = false;
          printf("====================Processing task id is %d, data source is %d, frame_seq is %d====================\n", get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp));
 #if DATA_REUSE
-         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp));
+         data_ready = is_reuse_ready(model->ftp_para_reuse, get_blob_task_id(temp), frame_num);
          if((model->ftp_para_reuse->schedule[get_blob_task_id(temp)] == 1) && data_ready) {
             blob* shrinked_temp = new_blob_and_copy_data(get_blob_task_id(temp), 
                        (model->ftp_para_reuse->shrinked_input_size[get_blob_task_id(temp)]),
