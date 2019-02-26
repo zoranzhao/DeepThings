@@ -93,7 +93,7 @@ blob* dequeue_and_merge(device_ctxt* ctxt){
    printf("Check ready_pool... : Client %d is ready, merging the results\n", temp->id);
 #endif
    uint32_t cli_id = temp->id;
-   uint32_t frame_num = get_blob_frame_seq(temp);
+   int32_t frame_num = get_blob_frame_seq(temp);
    free_blob(temp);
 
    ftp_parameters *ftp_para = model->ftp_para;

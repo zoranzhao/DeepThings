@@ -13,7 +13,7 @@ static double commu_size;
 #endif
 
 /*TODO, the task counters should be included in the context object*/
-static results_counter_per_frame[MAX_EDGE_NUM][FRAME_NUM];
+static uint32_t results_counter_per_frame[MAX_EDGE_NUM][FRAME_NUM];
 device_ctxt* deepthings_gateway_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t total_edge_number, const char** addr_list){
    device_ctxt* ctxt = init_gateway(total_edge_number, addr_list);
    cnn_model* model = load_cnn_model(network, weights);
@@ -133,13 +133,11 @@ void deepthings_merge_result_thread(void *arg){
    model->net->threadpool = pthreadpool_create(THREAD_NUM);
 #endif
    blob* temp;
-   int32_t cli_id;
-   int32_t frame_seq;
    while(1){
       temp = dequeue_and_merge((device_ctxt*)arg);
-      cli_id = get_blob_cli_id(temp);
-      frame_seq = get_blob_frame_seq(temp);
 #if DEBUG_FLAG
+      int32_t cli_id = get_blob_cli_id(temp);
+      int32_t frame_seq = get_blob_frame_seq(temp);
       printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
 #endif
       float* fused_output = (float*)(temp->data);
