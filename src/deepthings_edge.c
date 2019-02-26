@@ -19,7 +19,12 @@ device_ctxt* deepthings_edge_init(uint32_t N, uint32_t M, uint32_t fused_layers,
    set_gateway_public_addr(ctxt, GATEWAY_PUBLIC_ADDR);
    set_total_frames(ctxt, FRAME_NUM);
    set_batch_size(ctxt, N*M);
-
+#if DEBUG_LOG
+   char logname[20];
+   sprintf(logname, "edge_%d.log", edge_id);
+   FILE *log = fopen(logname, "w");
+   fclose(log);
+#endif
    return ctxt;
 }
 
@@ -37,8 +42,18 @@ void send_reuse_data(device_ctxt* ctxt, blob* task_input_blob){
 #if DEBUG_DEEP_EDGE
    printf("send self reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
+#if DEBUG_LOG
+   char logname[20];
+   sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
+   FILE *log = fopen(logname, "a");
+   fprintf(log, "Start sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+#endif
    copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
+#if DEBUG_LOG
+   fprintf(log, "Finish sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+   fclose(log);
+#endif
    free_blob(temp);
    close_service_connection(conn);
 }
@@ -60,14 +75,21 @@ void request_reuse_data(device_ctxt* ctxt, blob* task_input_blob, bool* reuse_da
 #if DEBUG_DEEP_EDGE
    printf("Request reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
-
+#if DEBUG_LOG
+   char logname[20];
+   sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
+   FILE *log = fopen(logname, "a");
+   fprintf(log, "Request reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+#endif
    temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), sizeof(bool)*4, (uint8_t*)reuse_data_is_required);
    copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
    free_blob(temp);
-
-
    temp = recv_data(conn);
+#if DEBUG_LOG
+   fprintf(log, "Recvd reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+   fclose(log);
+#endif
    copy_blob_meta(temp, task_input_blob);
    overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), reuse_data_is_required);
    place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, reuse_data_is_required);

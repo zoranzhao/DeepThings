@@ -50,17 +50,17 @@ void* deepthings_result_gateway(void* srv_conn, void* arg){
    service_conn *conn = (service_conn *)srv_conn;
    int32_t cli_id;
    int32_t frame_seq;
-#if DEBUG_FLAG
-   char ip_addr[ADDRSTRLEN];
-   int32_t processing_cli_id;
-   get_dest_ip_string(ip_addr, conn);
-   processing_cli_id = get_client_id(ip_addr, ctxt);
 #if DEBUG_TIMING
    double total_time;
    uint32_t total_frames;
    double now;
    uint32_t i;
 #endif
+#if DEBUG_FLAG
+   char ip_addr[ADDRSTRLEN];
+   int32_t processing_cli_id;
+   get_dest_ip_string(ip_addr, conn);
+   processing_cli_id = get_client_id(ip_addr, ctxt);
    if(processing_cli_id < 0)
       printf("Client IP address unknown ... ...\n");
 #endif
@@ -151,7 +151,7 @@ void deepthings_merge_result_thread(void *arg){
 
 
 #if DATA_REUSE
-static overlapped_tile_data* overlapped_data_pool[MAX_EDGE_NUM][PARTITIONS_MAX];
+static overlapped_tile_data* overlapped_data_pool[MAX_EDGE_NUM][PARTITIONS_MAX][FRAME_NUM];
 /*
 static bool partition_coverage[MAX_EDGE_NUM][PARTITIONS_MAX];
 */
@@ -162,6 +162,7 @@ void* recv_reuse_data_from_edge(void* srv_conn, void* arg){
 
    int32_t cli_id;
    int32_t task_id;
+   int32_t frame_seq;
 
    char ip_addr[ADDRSTRLEN];
    int32_t processing_cli_id;
@@ -173,6 +174,7 @@ void* recv_reuse_data_from_edge(void* srv_conn, void* arg){
    blob* temp = recv_data(conn);
    cli_id = get_blob_cli_id(temp);
    task_id = get_blob_task_id(temp);
+   frame_seq = get_blob_frame_seq(temp);
 #if DEBUG_COMMU_SIZE
    commu_size = commu_size + temp->size;
 #endif
@@ -180,9 +182,9 @@ void* recv_reuse_data_from_edge(void* srv_conn, void* arg){
 #if DEBUG_DEEP_GATEWAY
    printf("Overlapped data for client %d, task %d is collected from %d: %s, size is %d\n", cli_id, task_id, processing_cli_id, ip_addr, temp->size);
 #endif
-   if(overlapped_data_pool[cli_id][task_id] != NULL)
-      free_self_overlapped_tile_data(gateway_model,  overlapped_data_pool[cli_id][task_id]);
-   overlapped_data_pool[cli_id][task_id] = self_reuse_data_deserialization(gateway_model, task_id, (float*)temp->data, get_blob_frame_seq(temp));
+   if(overlapped_data_pool[cli_id][task_id][frame_seq] != NULL)
+      free_self_overlapped_tile_data(gateway_model,  overlapped_data_pool[cli_id][task_id][frame_seq]);
+   overlapped_data_pool[cli_id][task_id][frame_seq] = self_reuse_data_deserialization(gateway_model, task_id, (float*)temp->data, get_blob_frame_seq(temp));
 
    if(processing_cli_id != cli_id) notify_coverage((device_ctxt*)arg, temp, cli_id);
    free_blob(temp);
@@ -230,7 +232,7 @@ void* send_reuse_data_to_edge(void* srv_conn, void* arg){
 #if DEBUG_DEEP_GATEWAY
          printf("place_self_deserialized_data for client %d, task %d, the adjacent task is %d\n", cli_id, task_id, adjacent_id[position]);
 #endif
-         place_self_deserialized_data(gateway_model, adjacent_id[position], overlapped_data_pool[cli_id][adjacent_id[position]]);
+         place_self_deserialized_data(gateway_model, adjacent_id[position], overlapped_data_pool[cli_id][adjacent_id[position]][frame_num]);
       }
    }
    free(adjacent_id);
