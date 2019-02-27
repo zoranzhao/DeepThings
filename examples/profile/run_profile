@@ -1,0 +1,15 @@
+./deepthings -n 3 -m 3 -l 4
+./deepthings -n 3 -m 3 -l 8
+./deepthings -n 3 -m 3 -l 12
+./deepthings -n 3 -m 3 -l 16
+
+./deepthings -n 4 -m 4 -l 4
+./deepthings -n 4 -m 4 -l 8
+./deepthings -n 4 -m 4 -l 12
+./deepthings -n 4 -m 4 -l 16
+
+./deepthings -n 5 -m 5 -l 4
+./deepthings -n 5 -m 5 -l 8
+./deepthings -n 5 -m 5 -l 12
+./deepthings -n 5 -m 5 -l 16
+
