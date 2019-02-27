@@ -266,6 +266,7 @@ void deepthings_merge_result_thread_single_device(void *arg){
 
 void transfer_data(device_ctxt* client, device_ctxt* gateway){
    int32_t cli_id = client->this_cli_id;
+   uint32_t frame_seq = 0;
    while(1){
       blob* temp = dequeue(client->result_queue);
       printf("Transfering data from client %d to gateway\n", cli_id);
@@ -274,6 +275,8 @@ void transfer_data(device_ctxt* client, device_ctxt* gateway){
       free_blob(temp);
       if(gateway->results_counter[cli_id] == gateway->batch_size){
          temp = new_empty_blob(cli_id);
+         annotate_blob(temp, cli_id, frame_seq, 0);
+         frame_seq++;
          enqueue(gateway->ready_pool, temp);
          free_blob(temp);
          gateway->results_counter[cli_id] = 0;
@@ -284,6 +287,7 @@ void transfer_data(device_ctxt* client, device_ctxt* gateway){
 void transfer_data_with_number(device_ctxt* client, device_ctxt* gateway, int32_t task_num){
    int32_t cli_id = client->this_cli_id;
    int32_t count = 0;
+   uint32_t frame_seq = 0;
    for(count = 0; count < task_num; count ++){
       blob* temp = dequeue(client->result_queue);
       printf("Transfering data from client %d to gateway\n", cli_id);
@@ -292,6 +296,8 @@ void transfer_data_with_number(device_ctxt* client, device_ctxt* gateway, int32_
       free_blob(temp);
       if(gateway->results_counter[cli_id] == gateway->batch_size){
          temp = new_empty_blob(cli_id);
+         annotate_blob(temp, cli_id, frame_seq, 0);
+         frame_seq++;
          enqueue(gateway->ready_pool, temp);
          free_blob(temp);
          gateway->results_counter[cli_id] = 0;
