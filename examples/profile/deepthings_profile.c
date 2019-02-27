@@ -95,9 +95,9 @@ void profile_start(){
    }
 }
 
-void profile_end(uint32_t partition_h, uint32_t partition_w, uint32_t layers){
+void profile_end(uint32_t partition_h, uint32_t partition_w, uint32_t layers, uint32_t core){
    char filename[50];
-   sprintf(filename, "%dx%d_grid_%d_layers.prof", partition_h, partition_w, layers);
+   sprintf(filename, "%dx%d_grid_%d_layers_%d_core.prof", partition_h, partition_w, layers, core);
    dump_profile(filename);
 }
 
