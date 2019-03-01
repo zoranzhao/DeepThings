@@ -31,7 +31,7 @@ int main(int argc, char **argv){
    transfer_data_with_number(client_ctxt, gateway_ctxt, partitions_h*partitions_w*FRAME_NUM);
    deepthings_merge_result_thread_single_device(gateway_ctxt);
 
-   profile_end(partitions_h, partitions_w, fused_layers);
+   profile_end(partitions_h, partitions_w, fused_layers, THREAD_NUM);
 
    return 0;
 }

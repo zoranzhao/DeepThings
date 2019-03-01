@@ -41,7 +41,7 @@ typedef struct def_deepthings_profile_data {
 
 void dump_profile(char* filename);
 void profile_start();
-void profile_end(uint32_t partition_h, uint32_t partition_w, uint32_t layers);
+void profile_end(uint32_t partition_h, uint32_t partition_w, uint32_t layers, uint32_t thread_num);
 void start_timer(char* function_name, uint32_t frame_number, uint32_t partition_number, uint32_t data_reuse);
 void stop_timer(char* function_name, uint32_t frame_number, uint32_t partition_number, uint32_t data_reuse);
 
