@@ -6,6 +6,9 @@
 #if DEBUG_COMMU_SIZE
 static double commu_size;
 #endif
+#if DEBUG_TIMING
+static double start_time;
+#endif
 
 device_ctxt* deepthings_edge_init(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
    device_ctxt* ctxt = init_client(edge_id);
@@ -42,18 +45,18 @@ void send_reuse_data(device_ctxt* ctxt, blob* task_input_blob){
 #if DEBUG_DEEP_EDGE
    printf("send self reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
-#if DEBUG_LOG
+/*#if DEBUG_LOG
    char logname[20];
    sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
    FILE *log = fopen(logname, "a");
-   fprintf(log, "Start sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
-#endif
+   fprintf(log, "Start sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()-start_time); 
+#endif*/
    copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
-#if DEBUG_LOG
-   fprintf(log, "Finish sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+/*#if DEBUG_LOG
+   fprintf(log, "Finish sending self reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()-start_time); 
    fclose(log);
-#endif
+#endif*/
    free_blob(temp);
    close_service_connection(conn);
 }
@@ -75,21 +78,23 @@ void request_reuse_data(device_ctxt* ctxt, blob* task_input_blob, bool* reuse_da
 #if DEBUG_DEEP_EDGE
    printf("Request reuse data for task %d:%d \n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob)); 
 #endif
-#if DEBUG_LOG
+/*#if DEBUG_LOG
    char logname[20];
    sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
    FILE *log = fopen(logname, "a");
-   fprintf(log, "Request reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
-#endif
+   fprintf(log, "Request reuse data for task %d, (Frame %d, Cli %d) at time %f\n", get_blob_task_id(task_input_blob),
+            get_blob_frame_seq(task_input_blob), get_blob_cli_id(task_input_blob), sys_now_in_sec()-start_time); 
+#endif*/
    temp = new_blob_and_copy_data(get_blob_task_id(task_input_blob), sizeof(bool)*4, (uint8_t*)reuse_data_is_required);
    copy_blob_meta(temp, task_input_blob);
    send_data(temp, conn);
    free_blob(temp);
    temp = recv_data(conn);
-#if DEBUG_LOG
-   fprintf(log, "Recvd reuse data for task %d:%d at time %f\n", get_blob_cli_id(task_input_blob), get_blob_task_id(task_input_blob), sys_now_in_sec()); 
+/*#if DEBUG_LOG
+   fprintf(log, "Recvd reuse data for task %d, (Frame %d, Cli %d) at time %f\n", get_blob_task_id(task_input_blob),
+            get_blob_frame_seq(task_input_blob), get_blob_cli_id(task_input_blob), sys_now_in_sec()-start_time); 
    fclose(log);
-#endif
+#endif*/
    copy_blob_meta(temp, task_input_blob);
    overlapped_tile_data** temp_region_and_data = adjacent_reuse_data_deserialization(model, get_blob_task_id(temp), (float*)temp->data, get_blob_frame_seq(temp), reuse_data_is_required);
    place_adjacent_deserialized_data(model, get_blob_task_id(temp), temp_region_and_data, reuse_data_is_required);
@@ -115,7 +120,13 @@ static inline void process_task(device_ctxt* ctxt, blob* temp, bool is_reuse){
    copy_blob_meta(result, temp);
    enqueue(ctxt->result_queue, result); 
    free_blob(result);
-
+#if DEBUG_LOG
+   char logname[20];
+   sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
+   FILE *log = fopen(logname, "a");
+   fprintf(log, "====================Fnish processing task id is %d, data source is %d, frame_seq is %d, at time: %f====================\n", 
+           get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp), sys_now_in_sec()-start_time);
+#endif
 }
 
 
@@ -346,8 +357,6 @@ void deepthings_serve_stealing_thread(void *arg){
 
 
 void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
-
-
    device_ctxt* ctxt = deepthings_edge_init(N, M, fused_layers, network, weights, edge_id);
    exec_barrier(START_CTRL, TCP, ctxt);
 
@@ -356,15 +365,14 @@ void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char
 
    sys_thread_join(t1);
    sys_thread_join(t2);
-
 }
 
 void deepthings_victim_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
-
-
    device_ctxt* ctxt = deepthings_edge_init(N, M, fused_layers, network, weights, edge_id);
    exec_barrier(START_CTRL, TCP, ctxt);
-
+#if DEBUG_TIMING
+   start_time = sys_now_in_sec();
+#endif
    sys_thread_t t1 = sys_thread_new("partition_frame_and_perform_inference_thread", partition_frame_and_perform_inference_thread, ctxt, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, ctxt, 0, 0);
    sys_thread_t t3 = sys_thread_new("deepthings_serve_stealing_thread", deepthings_serve_stealing_thread, ctxt, 0, 0);
@@ -372,7 +380,5 @@ void deepthings_victim_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char*
    sys_thread_join(t1);
    sys_thread_join(t2);
    sys_thread_join(t3);
-
-
 }
 

@@ -33,7 +33,12 @@ device_ctxt* deepthings_gateway_init(uint32_t N, uint32_t M, uint32_t fused_laye
          results_counter_per_frame[cli][frame_seq] = 0;
       }
    }
-
+#if DEBUG_LOG
+   char logname[20];
+   sprintf(logname, "gateway.log");
+   FILE *log = fopen(logname, "w");
+   fclose(log);
+#endif
    return ctxt;
 }
 
@@ -90,6 +95,13 @@ void* deepthings_result_gateway(void* srv_conn, void* arg){
       annotate_blob(temp, cli_id, frame_seq, 0);
 #if DEBUG_FLAG
       printf("Results for client %d are all collected in deepthings_result_gateway, update ready_pool\n", cli_id);
+#endif
+#if DEBUG_LOG
+      char logname[20];
+      sprintf(logname, "gateway.log");
+      FILE *log = fopen(logname, "a");
+      fprintf(log, "Results for client %d, frame %d are all collected in deepthings_result_gateway, update ready_pool at time %f\n", cli_id, frame_seq, sys_now_in_sec()-start_time);
+      fclose(log);
 #endif
 #if DEBUG_TIMING
       printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);

@@ -10,7 +10,7 @@
 #define DATA_REUSE 1
 
 /*Generate debugging information in log file*/
-#define DEBUG_LOG 0
+#define DEBUG_LOG 1
 
 /*Debugging information for different components*/
 #define DEBUG_INFERENCE 0
