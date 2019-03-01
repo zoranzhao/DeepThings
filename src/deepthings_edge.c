@@ -124,7 +124,7 @@ static inline void process_task(device_ctxt* ctxt, blob* temp, bool is_reuse){
    char logname[20];
    sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
    FILE *log = fopen(logname, "a");
-   fprintf(log, "====================Fnish processing task id is %d, data source is %d, frame_seq is %d, at time: %f====================\n", 
+   fprintf(log, "Task %d, from cli %d, frame is %d, time: %f\n", 
            get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp), sys_now_in_sec()-start_time);
    fclose(log);
 #endif
@@ -360,7 +360,9 @@ void deepthings_serve_stealing_thread(void *arg){
 void deepthings_stealer_edge(uint32_t N, uint32_t M, uint32_t fused_layers, char* network, char* weights, uint32_t edge_id){
    device_ctxt* ctxt = deepthings_edge_init(N, M, fused_layers, network, weights, edge_id);
    exec_barrier(START_CTRL, TCP, ctxt);
-
+#if DEBUG_TIMING
+   start_time = sys_now_in_sec();
+#endif
    sys_thread_t t1 = sys_thread_new("steal_partition_and_perform_inference_thread", steal_partition_and_perform_inference_thread, ctxt, 0, 0);
    sys_thread_t t2 = sys_thread_new("send_result_thread", send_result_thread, ctxt, 0, 0);
 
