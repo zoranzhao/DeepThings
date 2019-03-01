@@ -121,13 +121,12 @@ static inline void process_task(device_ctxt* ctxt, blob* temp, bool is_reuse){
    enqueue(ctxt->result_queue, result); 
    free_blob(result);
 #if DEBUG_LOG
-   printf("====================Fnish processing task id is %d, data source is %d, frame_seq is %d, at time: %f====================\n", 
-           get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp), sys_now_in_sec()-start_time);
    char logname[20];
    sprintf(logname, "edge_%d.log", ctxt->this_cli_id);
    FILE *log = fopen(logname, "a");
    fprintf(log, "====================Fnish processing task id is %d, data source is %d, frame_seq is %d, at time: %f====================\n", 
            get_blob_task_id(temp), get_blob_cli_id(temp), get_blob_frame_seq(temp), sys_now_in_sec()-start_time);
+   fclose(log);
 #endif
 }
 
