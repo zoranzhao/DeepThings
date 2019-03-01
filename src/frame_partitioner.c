@@ -114,6 +114,7 @@ blob* dequeue_and_merge(device_ctxt* ctxt){
       else {
          enqueue(ctxt->results_pool[cli_id], temp);
          free_blob(temp);
+         continue;
       }
 
       if(net_para->type[ftp_para->fused_layers-1] == CONV_LAYER){
