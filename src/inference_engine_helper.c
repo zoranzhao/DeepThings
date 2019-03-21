@@ -140,6 +140,23 @@ void forward_all(cnn_model* model, uint32_t from){
    }
 }
 
+void forward_until(cnn_model* model, uint32_t from, uint32_t to){
+   network net = *(model->net);
+   int32_t i;
+   for(i = from; i < to; ++i){
+      net.index = i;
+      if(net.layers[i].delta){	       
+         fill_cpu(net.layers[i].outputs * net.layers[i].batch, 0, net.layers[i].delta, 1);
+      }
+      net.layers[i].forward(net.layers[i], net);
+      net.input = net.layers[i].output;
+      if(net.layers[i].truth) {
+         net.truth = net.layers[i].output;
+      }
+   }
+}
+
+
 tile_region relative_offsets(tile_region large, tile_region small){
     tile_region output; 
     output.w1 = small.w1 - large.w1 ; 
