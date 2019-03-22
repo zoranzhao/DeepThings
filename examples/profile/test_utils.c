@@ -139,7 +139,7 @@ void partition_frame_and_perform_inference_thread_single_device(device_ctxt* edg
 
       start_timer("partition_and_enqueue", frame_num, 0, 0);
       partition_and_enqueue(edge_ctxt, frame_num);
-      start_timer("partition_and_enqueue", frame_num, 0, 0);
+      stop_timer("partition_and_enqueue", frame_num, 0, 0);
       /*register_client(edge_ctxt);*/
 
       /*Dequeue and process task*/
@@ -210,7 +210,7 @@ void partition_frame_and_perform_inference_thread_single_device_no_reuse(device_
 
       start_timer("partition_and_enqueue", frame_num, 0, 0);
       partition_and_enqueue(edge_ctxt, frame_num);
-      start_timer("partition_and_enqueue", frame_num, 0, 0);
+      stop_timer("partition_and_enqueue", frame_num, 0, 0);
       /*register_client(edge_ctxt);*/
 
       /*Dequeue and process task*/
@@ -251,6 +251,45 @@ void deepthings_merge_result_thread_single_device(void *arg){
       image_holder img = load_image_as_model_input_local_data(model, get_blob_frame_seq(temp));
       set_model_input(model, fused_output);
       forward_all(model, model->ftp_para->fused_layers);   
+      draw_object_boxes_local_data(model, get_blob_frame_seq(temp));
+      free_image_holder(model, img);
+      free_blob(temp);
+#if DEBUG_FLAG
+      printf("Client %d, frame sequence number %d, finish processing\n", cli_id, frame_seq);
+#endif
+   }
+#ifdef NNPACK
+   pthreadpool_destroy(model->net->threadpool);
+   nnp_deinitialize();
+#endif
+}
+
+
+void deepthings_merge_result_thread_single_device_with_forward_until(void *arg){
+   cnn_model* model = (cnn_model*)(((device_ctxt*)(arg))->model);
+#ifdef NNPACK
+   nnp_initialize();
+   model->net->threadpool = pthreadpool_create(THREAD_NUM);
+#endif
+   blob* temp;
+   int32_t cli_id;
+   int32_t frame_seq;
+   int32_t count = 0;
+   for(count = 0; count < FRAME_NUM; count ++){
+      temp = dequeue_and_merge((device_ctxt*)arg);
+      cli_id = get_blob_cli_id(temp);
+      frame_seq = get_blob_frame_seq(temp);
+#if DEBUG_FLAG
+      printf("Client %d, frame sequence number %d, all partitions are merged in deepthings_merge_result_thread\n", cli_id, frame_seq);
+#endif
+      float* fused_output = (float*)(temp->data);
+      image_holder img = load_image_as_model_input_local_data(model, get_blob_frame_seq(temp));
+      set_model_input(model, fused_output);
+      start_timer("forward_until", frame_seq, model->ftp_para->fused_layers, 0);
+      forward_until(model, model->ftp_para->fused_layers, 16);   
+      stop_timer("forward_until", frame_seq, model->ftp_para->fused_layers, 0);
+      set_model_input(model, get_model_output(model, 15));
+      forward_all(model, 16);   
       draw_object_boxes_local_data(model, get_blob_frame_seq(temp));
       free_image_holder(model, img);
       free_blob(temp);

@@ -10,7 +10,7 @@ int main(int argc, char **argv){
 
    uint32_t partitions_h = get_int_arg(argc, argv, "-n", 5);
    uint32_t partitions_w = get_int_arg(argc, argv, "-m", 5);
-   uint32_t fused_layers = get_int_arg(argc, argv, "-l", 16);
+   uint32_t fused_layers = get_int_arg(argc, argv, "-l", 12);
 
    char network_file[30] = "../../models/yolo.cfg";
    char weight_file[30] = "../../models/yolo.weights";
@@ -22,14 +22,19 @@ int main(int argc, char **argv){
    device_ctxt* gateway_ctxt = deepthings_gateway_init(partitions_h, partitions_w, fused_layers, network_file, weight_file, total_cli_num, addr_list);
 
    /*Profile with data-reuse execution*/
-   partition_frame_and_perform_inference_thread_single_device(client_ctxt, gateway_ctxt);
-   transfer_data_with_number(client_ctxt, gateway_ctxt, partitions_h*partitions_w*FRAME_NUM);
-   deepthings_merge_result_thread_single_device(gateway_ctxt);
+   //partition_frame_and_perform_inference_thread_single_device(client_ctxt, gateway_ctxt);
+   //transfer_data_with_number(client_ctxt, gateway_ctxt, partitions_h*partitions_w*FRAME_NUM);
+   //deepthings_merge_result_thread_single_device(gateway_ctxt);
 
    /*Profile without data-reuse execution*/
+   //partition_frame_and_perform_inference_thread_single_device_no_reuse(client_ctxt, gateway_ctxt);
+   //transfer_data_with_number(client_ctxt, gateway_ctxt, partitions_h*partitions_w*FRAME_NUM);
+   //deepthings_merge_result_thread_single_device(gateway_ctxt);
+
+   /*Profile gateway execution*/
    partition_frame_and_perform_inference_thread_single_device_no_reuse(client_ctxt, gateway_ctxt);
    transfer_data_with_number(client_ctxt, gateway_ctxt, partitions_h*partitions_w*FRAME_NUM);
-   deepthings_merge_result_thread_single_device(gateway_ctxt);
+   deepthings_merge_result_thread_single_device_with_forward_until(gateway_ctxt);
 
    profile_end(partitions_h, partitions_w, fused_layers, THREAD_NUM);
 

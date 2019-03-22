@@ -15,6 +15,7 @@ static char function_list[NUM_OF_FUNCTIONS][40]={
 
 /*Data dependent function calls*/
    "forward_partition",
+   "forward_until",
    "load_image_as_model_input",
    "partition_and_enqueue"
 };

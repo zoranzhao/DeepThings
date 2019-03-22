@@ -18,6 +18,7 @@ void process_everything_in_gateway(void *arg);
 void transfer_data_with_number(device_ctxt* client, device_ctxt* gateway, int32_t task_num);
 void transfer_data(device_ctxt* client, device_ctxt* gateway);
 void deepthings_merge_result_thread_single_device(void *arg);
+void deepthings_merge_result_thread_single_device_with_forward_until(void *arg);
 void partition_frame_and_perform_inference_thread_single_device(device_ctxt* edge_ctxt, device_ctxt* gateway_ctxt);
 void partition_frame_and_perform_inference_thread_single_device_no_reuse(device_ctxt* edge_ctxt, device_ctxt* gateway_ctxt);
 

@@ -28,7 +28,7 @@
 #endif
 
 #ifndef NUM_OF_FUNCTIONS
-#define NUM_OF_FUNCTIONS 9
+#define NUM_OF_FUNCTIONS 10
 #endif
 
 typedef struct def_deepthings_profile_data {
