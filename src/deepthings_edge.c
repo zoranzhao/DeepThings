@@ -266,7 +266,7 @@ void send_result_thread;
 /*Function handling steal reqeust*/
 #if DATA_REUSE
 void* steal_client_reuse_aware(void* srv_conn, void* arg){
-   printf("steal_client_reuse_aware ... ... at time %f\n", sys_now_in_sec()-start_time);
+   /*printf("steal_client_reuse_aware ... ... at time %f\n", sys_now_in_sec()-start_time);*/
    service_conn *conn = (service_conn *)srv_conn;
    device_ctxt* ctxt = (device_ctxt*)arg;
    cnn_model* edge_model = (cnn_model*)(ctxt->model);
@@ -323,7 +323,7 @@ void* steal_client_reuse_aware(void* srv_conn, void* arg){
 }
 
 void* update_coverage(void* srv_conn, void* arg){
-   printf("update_coverage ... ... \n");
+   /*printf("update_coverage ... ... \n");*/
    service_conn *conn = (service_conn *)srv_conn;
    device_ctxt* ctxt = (device_ctxt*)arg;
    cnn_model* edge_model = (cnn_model*)(ctxt->model);
